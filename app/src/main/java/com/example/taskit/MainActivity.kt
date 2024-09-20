@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
         val taskDao = AppDatabase.getDatabase(this).taskDao
         val bucketViewModel = RoomBucketViewModel(
             bucketDao = bucketDao,
-            taskDao = taskDao,
             scope = lifecycleScope,
         )
         val taskViewModel = RoomTaskViewModel(

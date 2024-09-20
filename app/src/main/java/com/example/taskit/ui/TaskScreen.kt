@@ -1,7 +1,6 @@
 package com.example.taskit.ui
 
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,21 +42,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.taskit.ui.model.Bucket
 import com.example.taskit.ui.model.Task
 import com.example.taskit.ui.viewmodel.BucketViewModel
 import com.example.taskit.ui.viewmodel.TaskViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
     taskViewModel: TaskViewModel,
     bucket: Bucket,
     updateBucket: (bucket: Bucket)->Unit,
 ) {
-    val tasks by taskViewModel.buildTasksStateFlow(bucket).collectAsStateWithLifecycle()
+    val tasksStateFlow = remember(bucket) {
+        taskViewModel.buildTasksStateFlow(bucket)
+    }
+    val tasks by tasksStateFlow.collectAsStateWithLifecycle()
 
     var focusedItemIndex by remember { mutableIntStateOf(0) }
 
@@ -153,7 +152,6 @@ fun BucketNameText(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditableTaskItem(
     task: Task,
@@ -163,7 +161,6 @@ fun EditableTaskItem(
     onTaskDelete:() -> Unit,
     requireFocus: Boolean
 ) {
-    var text by remember { mutableStateOf(task.content) }
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(requireFocus) }
 
@@ -172,17 +169,14 @@ fun EditableTaskItem(
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Checkbox to toggle the checked state
         Checkbox(
             checked = task.isChecked,
             onCheckedChange = onCheckedChange
         )
-        // TextField for the user to input or edit the note text
         BasicTextField(
-            value = text,
+            value = task.content,
             textStyle = MaterialTheme.typography.bodyMedium,
             onValueChange = {
-                text = it
                 onTextChange(it)
             },
             modifier = Modifier
@@ -205,8 +199,6 @@ fun EditableTaskItem(
         }
 
     }
-
-    //When creating a new task item, focus on this item
     LaunchedEffect(requireFocus){
         if(requireFocus){
             focusRequester.requestFocus()
@@ -228,10 +220,3 @@ fun ButtonAddTask(onClick: () -> Unit){
         Text("Add Task")
     }
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun PreviewTask() {
-    TaskScreen()
-}*/
