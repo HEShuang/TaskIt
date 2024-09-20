@@ -85,8 +85,11 @@ fun TaskScreen(
                             onCheckedChange = { isChecked ->
                                 taskViewModel.updateTask(task.copy(isChecked = isChecked))
                             },
-                            onTextChange = { newText ->
-                                taskViewModel.updateTask(task.copy(content = newText))
+                            onNameChange = { newText ->
+                                if(newText != task.content) {
+                                    Log.d("TaskItem", "updateTask from ${task.content} to $newText")
+                                    taskViewModel.updateTask(task.copy(content = newText))
+                                }
                             },
                             onTaskAdd = {
                                 focusedItemIndex = tasks.size

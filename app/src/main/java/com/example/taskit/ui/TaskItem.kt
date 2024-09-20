@@ -35,8 +35,12 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.LayoutDirection
 import com.example.taskit.ui.model.Task
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -44,12 +48,16 @@ import com.example.taskit.ui.model.Task
 fun TaskItem(
     task: Task,
     onCheckedChange: (Boolean) -> Unit,
-    onTextChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
     onTaskAdd: () -> Unit,
     onTaskDelete:() -> Unit,
     onTaskMoved:(fromIndex: Int)->Unit,
     requireFocus: Boolean
 ) {
+    val direction = LocalLayoutDirection.current
+    var nameFieldValue by remember (task.id){
+        mutableStateOf(task.content.toTextFieldValue(direction))
+    }
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(requireFocus) }
 
@@ -62,6 +70,11 @@ fun TaskItem(
                 return true
             }
         }
+    }
+
+    LaunchedEffect(nameFieldValue.text) {
+        Log.d("TaskItem", "call onNameChange: ${nameFieldValue.text}")
+        onNameChange(nameFieldValue.text)
     }
 
     Row(
@@ -78,7 +91,8 @@ fun TaskItem(
             }
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
-                    event.mimeTypes()
+                    event
+                        .mimeTypes()
                         .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
                 },
                 target = dndTarget,
@@ -94,10 +108,11 @@ fun TaskItem(
             onCheckedChange = onCheckedChange
         )
         BasicTextField(
-            value = task.content,
+            value = nameFieldValue,
             textStyle = MaterialTheme.typography.bodyMedium,
             onValueChange = {
-                onTextChange(it)
+                Log.d("TaskItem", "onValueChange: $nameFieldValue")
+                nameFieldValue = it
             },
             modifier = Modifier
                 .weight(1f)
@@ -125,3 +140,8 @@ fun TaskItem(
         }
     }
 }
+
+fun String.toTextFieldValue(layoutDirection: LayoutDirection): TextFieldValue = TextFieldValue(
+    text = this,
+    selection = if (layoutDirection == LayoutDirection.Ltr) TextRange(length) else TextRange.Zero
+)
