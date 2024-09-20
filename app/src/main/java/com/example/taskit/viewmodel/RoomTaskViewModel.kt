@@ -1,8 +1,7 @@
 package com.example.taskit.viewmodel
 
 import com.example.taskit.db.TaskDao
-import com.example.taskit.ui.model.Bucket
-import com.example.taskit.ui.model.Task
+import com.example.taskit.ui.model.Bucket as UiBucket
 import com.example.taskit.ui.model.Task as UiTask
 import com.example.taskit.db.model.Task as DbTask
 import com.example.taskit.ui.viewmodel.TaskViewModel
@@ -19,97 +18,85 @@ class RoomTaskViewModel(
     private val scope: CoroutineScope,
 ): TaskViewModel {
 
-    override fun buildTasksStateFlow(bucket: Bucket?): StateFlow<List<Task>> {
+    override fun buildTasksStateFlow(bucket: UiBucket?): StateFlow<List<UiTask>> {
         return if(bucket == null )
             MutableStateFlow(emptyList())
         else
-            taskDao.getTasks(bucket.id)
+            taskDao.getTasksFlow(bucket.id)
                 .map { tasks -> tasks.map { it.toUiTask(bucket) } }
                 .stateIn(scope, SharingStarted.Lazily, emptyList())
     }
 
-    override fun addTask(task: Task) {
+    override fun addTask(task: UiTask) {
         scope.launch {
             taskDao.insertTask(task.toDbTask())
         }
     }
 
-    override fun updateTask(task: Task) {
+    override fun updateTask(task: UiTask) {
         scope.launch {
             taskDao.updateTask(task.toDbTask())
         }
     }
 
-    override fun deleteTask(task: Task) {
+    override fun deleteTask(task: UiTask) {
         scope.launch {
             taskDao.deleteTask(task.toDbTask())
         }
     }
 
-    override fun moveTask(taskToMove: Task, toIndex: Int) {
-        TODO("Not yet implemented")
-        /*val bucket = taskToMove.bucket
-        val tasksToUpdate = mutableListOf<Task>()
-        val newTasks = bucket.tasks.toMutableList()
+    override fun moveTask(taskToMove: UiTask, toIndex: Int) {
+        //fetch all tasks of the bucket
+        val moveFromIndex = taskToMove.index
 
-        fun moveDown(){
+        scope.launch {
+            val tasks = taskDao.getTasks(taskToMove.bucket.id)
 
-            for(i in taskToMove.index..toIndex){
+            val tasksToUpdate = mutableListOf<DbTask>()
 
-                if(i == taskToMove.index){
-                    val newTask = taskToMove.copy(index = toIndex)
-                    tasksToUpdate += newTask
-                    newTasks[toIndex] = newTask
+
+            fun moveDown() {
+
+                for (i in moveFromIndex..toIndex) {
+
+                    tasksToUpdate += if (i == moveFromIndex) {
+                        taskToMove.toDbTask().copy(taskOrder = toIndex)
+                    } else {
+                        val oldTask = tasks[i]
+                        oldTask.copy(taskOrder = oldTask.taskOrder - 1)
+                    }
                 }
-                else
-                {
-                    val oldTask = bucket.tasks[i]
-                    val newTask = oldTask.copy(index = oldTask.index - 1)
-                    tasksToUpdate += newTask
-                    newTasks[i-1] = newTask
+            }
+
+            fun moveUp() {
+
+                for (i in toIndex..taskToMove.index) {
+
+                    tasksToUpdate += if (i == taskToMove.index) {
+                        taskToMove.toDbTask().copy(taskOrder = toIndex)
+                    } else {
+                        val oldTask = tasks[i]
+                        oldTask.copy(taskOrder = oldTask.taskOrder - 1)
+                    }
                 }
+            }
+
+            if (taskToMove.index < toIndex)
+                moveDown()
+            else if (taskToMove.index > toIndex)
+                moveUp()
+
+            if (tasksToUpdate.isNotEmpty()) {
+                taskDao.updateTasks(tasks)
             }
         }
-
-        fun moveUp(){
-
-            for(i in toIndex..taskToMove.index){
-
-                if(i == taskToMove.index){
-                    val newTask = taskToMove.copy(index = toIndex)
-                    tasksToUpdate += newTask
-                    newTasks[toIndex] = newTask
-                }
-                else{
-                    val oldTask = bucket.tasks[i]
-                    val newTask = oldTask.copy(index = oldTask.index + 1)
-                    tasksToUpdate += newTask
-                    newTasks[i+1] = newTask
-                }
-            }
-        }
-
-        if(taskToMove.index == toIndex)
-            return
-        if(taskToMove.index < toIndex)
-            moveDown()
-        else
-            moveUp()
-
-        if(tasksToUpdate.isNotEmpty()) {
-            bucket.tasks = newTasks
-            scope.launch {
-                for (task in tasksToUpdate)
-                    taskDao.updateTask(task.toDbTask())
-            }
-        }*/
     }
 
     override fun renameBucket() {
         TODO("Not yet implemented")
     }
 
-    private fun DbTask.toUiTask(bucket: Bucket) = UiTask(
+    private fun DbTask.toUiTask(bucket: UiBucket) = UiTask(
         id = id,
         bucket = bucket,
         parentId = parentId,

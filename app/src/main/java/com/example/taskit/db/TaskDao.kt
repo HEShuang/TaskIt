@@ -18,10 +18,16 @@ interface TaskDao {
     @Update
     suspend fun updateTask(task: Task)
 
+    @Update
+    suspend fun updateTasks(tasks: List<Task>)
+
     @Delete
     suspend fun deleteTask(task: Task)
 
     @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId ORDER BY task_order ASC")
-    fun getTasks(bucketId: Int): Flow<List<Task>>
+    suspend fun getTasks(bucketId: Int): List<Task>
+
+    @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId ORDER BY task_order ASC")
+    fun getTasksFlow(bucketId: Int): Flow<List<Task>>
 
 }
