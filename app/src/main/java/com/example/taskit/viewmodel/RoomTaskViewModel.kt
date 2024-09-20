@@ -1,6 +1,8 @@
 package com.example.taskit.viewmodel
 
+import android.util.Log
 import com.example.taskit.db.TaskDao
+import com.example.taskit.db.model.Task
 import com.example.taskit.ui.model.Bucket as UiBucket
 import com.example.taskit.ui.model.Task as UiTask
 import com.example.taskit.db.model.Task as DbTask
@@ -45,49 +47,40 @@ class RoomTaskViewModel(
         }
     }
 
-    override fun moveTask(taskToMove: UiTask, toIndex: Int) {
-        //fetch all tasks of the bucket
-        val moveFromIndex = taskToMove.index
-
+    override fun moveTask(fromIndex: Int, toIndex: Int, bucketId: Int) {
         scope.launch {
-            val tasks = taskDao.getTasks(taskToMove.bucket.id)
-
+            //fetch all tasks of the bucket
+            val tasks = taskDao.getTasks(bucketId)
             val tasksToUpdate = mutableListOf<DbTask>()
 
-
             fun moveDown() {
-
-                for (i in moveFromIndex..toIndex) {
-
-                    tasksToUpdate += if (i == moveFromIndex) {
-                        taskToMove.toDbTask().copy(taskOrder = toIndex)
-                    } else {
-                        val oldTask = tasks[i]
-                        oldTask.copy(taskOrder = oldTask.taskOrder - 1)
-                    }
+                for(task in tasks){
+                    val index = task.taskOrder
+                    if(index == fromIndex)
+                        tasksToUpdate += task.copy(taskOrder = toIndex)
+                    else  if(index in fromIndex + 1..toIndex)
+                        tasksToUpdate += task.copy(taskOrder = index - 1)
                 }
             }
 
             fun moveUp() {
-
-                for (i in toIndex..taskToMove.index) {
-
-                    tasksToUpdate += if (i == taskToMove.index) {
-                        taskToMove.toDbTask().copy(taskOrder = toIndex)
-                    } else {
-                        val oldTask = tasks[i]
-                        oldTask.copy(taskOrder = oldTask.taskOrder - 1)
+                for(task in tasks){
+                    val index = task.taskOrder
+                    if(index == fromIndex)
+                        tasksToUpdate += task.copy(taskOrder = toIndex)
+                    else if(index in toIndex..<fromIndex){
+                        tasksToUpdate += task.copy(taskOrder = index + 1)
                     }
                 }
             }
 
-            if (taskToMove.index < toIndex)
+            if (fromIndex < toIndex)
                 moveDown()
-            else if (taskToMove.index > toIndex)
+            else if (fromIndex > toIndex)
                 moveUp()
 
             if (tasksToUpdate.isNotEmpty()) {
-                taskDao.updateTasks(tasks)
+                taskDao.updateTasks(tasksToUpdate)
             }
         }
     }

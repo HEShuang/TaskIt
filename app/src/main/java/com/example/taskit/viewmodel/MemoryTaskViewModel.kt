@@ -22,7 +22,7 @@ class MemoryTaskViewModel: TaskViewModel {
         TODO("Not yet implemented")
     }
 
-    override fun moveTask(taskToMove: Task, toIndex: Int) {
+    override fun moveTask(fromIndex: Int, toIndex: Int, bucketId: Int) {
         TODO("Not yet implemented")
     }
 

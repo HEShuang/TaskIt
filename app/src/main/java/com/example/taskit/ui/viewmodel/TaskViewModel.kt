@@ -9,6 +9,6 @@ interface TaskViewModel {
     fun addTask(task: Task)
     fun updateTask(task: Task)
     fun deleteTask(task: Task)
-    fun moveTask(taskToMove: Task, toIndex: Int)
+    fun moveTask(fromIndex: Int, toIndex: Int, bucketId: Int)
     fun renameBucket()
 }

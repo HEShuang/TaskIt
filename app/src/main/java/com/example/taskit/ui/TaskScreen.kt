@@ -90,13 +90,17 @@ fun TaskScreen(
                             },
                             onTaskAdd = {
                                 focusedItemIndex = tasks.size
-                                taskViewModel.addTask(Task(bucket = bucket))
+                                val newIndex = if(tasks.size > 0) tasks.last().index + 1 else 0
+                                taskViewModel.addTask(Task(bucket = bucket, index = newIndex))
                             },
                             onTaskDelete = {
                                 if (index == tasks.size - 1 && index != 0){
                                     focusedItemIndex = index - 1
                                 }
                                 taskViewModel.deleteTask(task)
+                            },
+                            onTaskMoved = {fromIndex ->
+                                taskViewModel.moveTask(fromIndex, task.index, task.bucket.id)
                             },
                             requireFocus = index == focusedItemIndex
                         )
@@ -111,7 +115,8 @@ fun TaskScreen(
                             elevation = null,
                             onClick = {
                                 focusedItemIndex = tasks.size
-                                taskViewModel.addTask(Task(bucket = bucket))
+                                val newIndex = if(tasks.size > 0) tasks.last().index + 1 else 0
+                                taskViewModel.addTask(Task(bucket = bucket, index = newIndex))
                             }
                         ){
                             Icon(Icons.Filled.Add, contentDescription = "Add Task")
