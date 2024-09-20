@@ -72,7 +72,7 @@ fun TaskScreen(
                 horizontalAlignment = Alignment.Start
             ) {
                 Log.d("TaskScreen before BucketNameText", "check Bucket: ${bucket.name}")
-                BucketNameText(
+                TaskScreenBucket(
                     name = bucket.name,
                     onTextChange = {newName ->
                         updateBucket(bucket.copy(name = newName))
@@ -80,8 +80,7 @@ fun TaskScreen(
                 )
                 LazyColumn (){
                     itemsIndexed(tasks) { index, task ->
-
-                        EditableTaskItem(
+                        TaskItem(
                             task = task,
                             onCheckedChange = { isChecked ->
                                 taskViewModel.updateTask(task.copy(isChecked = isChecked))
@@ -102,121 +101,25 @@ fun TaskScreen(
                             requireFocus = index == focusedItemIndex
                         )
                     }
+
                     item {
-                        ButtonAddTask {
-                            focusedItemIndex = tasks.size
-                            taskViewModel.addTask(Task(bucket = bucket))
+                        Button(
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ),
+                            elevation = null,
+                            onClick = {
+                                focusedItemIndex = tasks.size
+                                taskViewModel.addTask(Task(bucket = bucket))
+                            }
+                        ){
+                            Icon(Icons.Filled.Add, contentDescription = "Add Task")
+                            Text("Add Task")
                         }
                     }
                 }
-
-                // Simple text field for editing tasks
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(onClick = {
-                    // Handle saving the task list or navigate back
-                }) {
-                    Text("Save Task List")
-                }
             }
         }
     )
-}
-
-@Composable
-fun BucketNameText(
-    name: String,
-    onTextChange: (String)->Unit,
-)
-{
-    var text by remember { mutableStateOf(name) }
-    val focusRequester = remember { FocusRequester() }
-    var isFocused by remember { mutableStateOf(false) }
-
-    BasicTextField(
-        value = text,
-        onValueChange = {
-            text = it
-            onTextChange(it)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 2.dp, vertical = 6.dp)
-            .focusRequester(focusRequester)
-            .onFocusChanged { focusState ->
-                isFocused = focusState.isFocused
-            },
-        singleLine = true,
-        textStyle = MaterialTheme.typography.titleMedium,
-    )
-}
-
-@Composable
-fun EditableTaskItem(
-    task: Task,
-    onCheckedChange: (Boolean) -> Unit,
-    onTextChange: (String) -> Unit,
-    onTaskAdd: () -> Unit,
-    onTaskDelete:() -> Unit,
-    requireFocus: Boolean
-) {
-    val focusRequester = remember { FocusRequester() }
-    var isFocused by remember { mutableStateOf(requireFocus) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = task.isChecked,
-            onCheckedChange = onCheckedChange
-        )
-        BasicTextField(
-            value = task.content,
-            textStyle = MaterialTheme.typography.bodyMedium,
-            onValueChange = {
-                onTextChange(it)
-            },
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester)
-                .onFocusChanged { focusState ->
-                    isFocused = focusState.isFocused
-                },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done,
-            ),
-            keyboardActions = KeyboardActions(onDone = { onTaskAdd() })
-        )
-        if(isFocused){
-            IconButton(onClick = onTaskDelete) {
-                Icon(Icons.Default.Close,contentDescription = "Delete")
-            }
-        }
-
-    }
-    LaunchedEffect(requireFocus){
-        if(requireFocus){
-            focusRequester.requestFocus()
-        }
-    }
-}
-
-@Composable
-fun ButtonAddTask(onClick: () -> Unit){
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary
-        ),
-        elevation = null
-    ){
-        Icon(Icons.Filled.Add, contentDescription = "Add Task")
-        Text("Add Task")
-    }
 }
