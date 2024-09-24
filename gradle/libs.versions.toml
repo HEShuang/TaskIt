@@ -11,6 +11,7 @@ composeBom = "2023.08.00"
 navigationCompose = "2.8.0"
 kspVersion = "2.0.20-1.0.24"
 roomVersion = "2.6.1"
+reorderable = "2.3.3"
 
 
 [libraries]
@@ -32,6 +33,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

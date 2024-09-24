@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -21,8 +20,6 @@ import com.example.taskit.ui.TaskScreen
 import com.example.taskit.ui.model.Bucket
 import com.example.taskit.ui.theme.TaskItTheme
 import com.example.taskit.ui.viewmodel.TaskViewModel
-import com.example.taskit.viewmodel.MemoryBucketViewModel
-import com.example.taskit.viewmodel.MemoryTaskViewModel
 import com.example.taskit.viewmodel.RoomBucketViewModel
 import com.example.taskit.viewmodel.RoomTaskViewModel
 
@@ -113,20 +110,6 @@ fun MyApp(bucketViewModel: BucketViewModel, taskViewModel: TaskViewModel) {
             }
         }
     }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewMyApp() {
-
-    val bucketViewModel = MemoryBucketViewModel()
-    val taskViewModel = MemoryTaskViewModel()
-    for(i in 0..5) {
-        bucketViewModel.addBucket(i+1) {}
-    }
-
-    HomeScreen(bucketViewModel, taskViewModel, {},{})
 }
 
 

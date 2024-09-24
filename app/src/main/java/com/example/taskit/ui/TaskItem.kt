@@ -1,14 +1,10 @@
 package com.example.taskit.ui
 
-import android.content.ClipData
-import android.content.ClipDescription
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.draganddrop.dragAndDropSource
-import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,6 +15,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,92 +24,73 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draganddrop.DragAndDropEvent
-import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.draganddrop.DragAndDropTransferData
-import androidx.compose.ui.draganddrop.mimeTypes
-import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import com.example.taskit.ui.model.Task
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskItem(
+fun ReorderableCollectionItemScope.TaskItem(
+    uiIndex: Int,
     task: Task,
+    isDragging: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    onNameChange: (String) -> Unit,
+    onContentChange: (String) -> Unit,
     onTaskAdd: () -> Unit,
     onTaskDelete:() -> Unit,
-    onTaskMoved:(fromIndex: Int)->Unit,
+    onDragStart: () -> Unit,
+    onDragEnd: () -> Unit,
     requireFocus: Boolean
 ) {
     val direction = LocalLayoutDirection.current
-    var nameFieldValue by remember (task.id){
+    var contentFieldValue by remember (task.id){
         mutableStateOf(task.content.toTextFieldValue(direction))
     }
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(requireFocus) }
 
-    val dndTarget = remember {
-        object : DragAndDropTarget {
-            override fun onDrop(event: DragAndDropEvent): Boolean {
-                val fromIndex = event.toAndroidDragEvent()
-                    .clipData?.getItemAt(0)?.text.toString().toInt()
-                onTaskMoved(fromIndex)
-                return true
-            }
-        }
-    }
-
-    LaunchedEffect(nameFieldValue.text) {
-        Log.d("TaskItem", "call onNameChange: ${nameFieldValue.text}")
-        onNameChange(nameFieldValue.text)
+    LaunchedEffect(contentFieldValue.text) {
+        onContentChange(contentFieldValue.text)
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .dragAndDropSource {
-                detectTapGestures(onLongPress = {
-                    startTransfer(
-                        transferData = DragAndDropTransferData(
-                            clipData = ClipData.newPlainText("fromTaskIndex", task.index.toString())
-                        )
-                    )
-                })
-            }
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    event
-                        .mimeTypes()
-                        .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
-                },
-                target = dndTarget,
-            ),
+            .background(if (isDragging) Color.Red else Color.Transparent),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            Icons.Default.ArrowDropDown,
+            modifier = Modifier
+                .draggableHandle(
+                    onDragStarted = {
+                        onDragStart()
+                    },
+                    onDragStopped = onDragEnd,
+                )
+                .padding(6.dp),
+            imageVector = Icons.Default.ArrowDropDown,
             contentDescription = "Drag Drop",
         )
+        Text(text = uiIndex.toString()  )
         Checkbox(
             checked = task.isChecked,
             onCheckedChange = onCheckedChange
         )
         BasicTextField(
-            value = nameFieldValue,
+            value = contentFieldValue,
             textStyle = MaterialTheme.typography.bodyMedium,
             onValueChange = {
-                Log.d("TaskItem", "onValueChange: $nameFieldValue")
-                nameFieldValue = it
+                contentFieldValue = it
             },
             modifier = Modifier
                 .weight(1f)
@@ -127,6 +105,7 @@ fun TaskItem(
             ),
             keyboardActions = KeyboardActions(onDone = { onTaskAdd() })
         )
+
         if(isFocused){
             IconButton(onClick = onTaskDelete) {
                 Icon(Icons.Default.Close,contentDescription = "Delete")

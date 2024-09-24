@@ -3,9 +3,11 @@ package com.example.taskit.db.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "tasks",
+@Entity(
+    tableName = "tasks",
     foreignKeys = [
         ForeignKey(
             entity = Bucket::class,
@@ -13,6 +15,9 @@ import androidx.room.PrimaryKey
             childColumns = ["bucket_id"],
             onDelete = ForeignKey.CASCADE
         ),
+    ],
+    indices = [
+        Index(value = ["bucket_id"]),
     ]
 )
 data class Task(

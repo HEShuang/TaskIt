@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5feddfa96ef93f0a1e83b074e72084fa",
+    "identityHash": "3a472ccf1d54d07e70727ce96a9588a6",
     "entities": [
       {
         "tableName": "buckets",
@@ -77,7 +77,17 @@
             "id"
           ]
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_tasks_bucket_id",
+            "unique": false,
+            "columnNames": [
+              "bucket_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tasks_bucket_id` ON `${TABLE_NAME}` (`bucket_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "buckets",
@@ -128,7 +138,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5feddfa96ef93f0a1e83b074e72084fa')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3a472ccf1d54d07e70727ce96a9588a6')"
     ]
   }
 }
