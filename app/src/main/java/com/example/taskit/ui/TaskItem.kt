@@ -136,7 +136,6 @@ fun ReorderableCollectionItemScope.TaskItem(
                     },
                     onDragStopped = {
                         onReorderEnd()
-                        Log.d("MoveTask", "onDragStopped: task isChild: $task")
                     },
                 )
                 //horizontal drag for changing parent task

@@ -34,16 +34,16 @@ class RoomTaskViewModel(
                 //They need to be reordered by depth first traverse
                 val tasksByParent = tasks.groupBy { it.parentId }
                 val rootTasks = tasksByParent[-1] ?: emptyList()
-
+                Log.d("Flow change","---------------------------")
                 fun depthFirstTraverse(task: DbTask): List<UiTask> {
                     val children = tasksByParent[task.id] ?: emptyList()
                     val isVisible = task.parentId != movingTaskId
+                    Log.d("Flow change", "id:${task.id}, parent:${task.parentId}, order:${task.taskOrder}, content:${task.content}")
                     return listOf(task.toUiTask(bucket, isVisible)) + children.flatMap { childTask -> depthFirstTraverse(childTask) }
                 }
                 //transform each root task to a list of tasks, then flat map them all to a single list
                 rootTasks.flatMap { rootTask -> depthFirstTraverse(rootTask) }
             }
-            .onEach {dbTasks -> Log.d("MoveTask Flow change", "List from DB: ${dbTasks.joinToString { it.content }}") }
             .stateIn(scope, SharingStarted.Lazily, emptyList())
     }
 
@@ -82,7 +82,6 @@ class RoomTaskViewModel(
             val fromParentId = fromTask.parentId
             val toParentId = toTask.parentId
             if(fromParentId == toParentId && fromOrder == toOrder) return@launchWriteTask
-            Log.d("MoveTask", "Move $fromTask to $toTask")
 
             val bucketId = fromTask.bucketId
             val tasksToUpdate = mutableListOf<DbTask>()
@@ -114,7 +113,6 @@ class RoomTaskViewModel(
                 //If moving up, insert the task before the destination task
                 //Increase taskOrder of destination task and its siblings below
                 if(compareFromOrder >= compareToOrder) {//Moving Up
-                    Log.d("MoveTask", "move to new parent, moving up")
                     tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = toOrder)
 
                     val toParentChildren = taskDao.getTasks(bucketId, toParentId)
@@ -127,7 +125,6 @@ class RoomTaskViewModel(
                 }
                 //Moving down
                 else{
-                    Log.d("MoveTask", "move to new parent, moving down")
                     //If the destination task has children, insert the task as it's first child
                     //Increase taskOrder of the original children
                     val destTaskChildren = taskDao.getTasks(bucketId, toTaskId)

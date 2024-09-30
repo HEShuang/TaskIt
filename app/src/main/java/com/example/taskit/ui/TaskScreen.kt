@@ -86,15 +86,11 @@ fun TaskScreen(
     var reorderableTasks by remember(tasks) { mutableStateOf(tasks) }
     var reorderToIndex by remember { mutableIntStateOf(-1) }
 
-    LaunchedEffect(tasks) {
-        Log.d("MoveTask", "List from UI (task): ${tasks.joinToString { it.content }}")
-    }
-
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        Log.d("MoveTask", "onReorder : ${from.index} -> ${to.index}")
         reorderToIndex = to.index
         reorderableTasks = reorderableTasks.toMutableList().apply {
+            Log.d("MoveTask", "onReorder : ${from.index} -> ${to.index}")
             add(to.index, removeAt(from.index))
         }
     }
@@ -117,22 +113,13 @@ fun TaskScreen(
                         updateBucket(bucket.copy(name = newName))
                     }
                 )
-                LaunchedEffect(reorderableTasks) {
-                    Log.d("MoveTask Visibility", "List changed from UI (reorderableTasks): ${reorderableTasks.joinToString { it.content }}")
-                }
 
                 LazyColumn (
                     state = lazyListState,
                 ){
-                    Log.d("MoveTask Visibility", "LazyColumn composition")
                     itemsIndexed(reorderableTasks, key = { _, task -> task.id } ) { index, task ->
-                        //Log.d("MoveTask Visibility","------------------------------")
-                        //Log.d("MoveTask Visibility", "itemsIndexed composition: $task")
                         ReorderableItem(reorderableLazyListState, key = task.id) { isDragging ->
-                            //Log.d("MoveTask Visibility", "ReorderableItem composition: $task")
                             if(!task.isVisible) return@ReorderableItem
-                            //Log.d("MoveTask Visibility", "TaskItem composition: $task")
-
                             TaskItem(
                                 task = task,
                                 isReordering = isDragging,
@@ -141,7 +128,6 @@ fun TaskScreen(
                                 },
                                 onContentChange = { newText ->
                                     if(newText != task.content) {
-                                        Log.d("TaskItem", "updateTask from ${task.content} to $newText")
                                         taskViewModel.updateTaskContent(task.id, newText)
                                     }
                                 },
@@ -156,9 +142,6 @@ fun TaskScreen(
                                     taskViewModel.deleteTask(task.id)
                                 },
                                 onReorderStart = {
-                                    //reorderFromIndex = index
-                                    Log.d("MoveTask", "-------------------------------------")
-                                    Log.d("MoveTask", "onDragStart: pos$index: $task")
                                     taskViewModel.onReorderStart(task.id)
                                 },
                                 onReorderEnd = {
