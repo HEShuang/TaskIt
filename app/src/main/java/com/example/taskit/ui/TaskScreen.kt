@@ -132,10 +132,11 @@ fun TaskScreen(
                                     }
                                 },
                                 onTaskAdd = {
-                                    focusedItemIndex = tasks.size
-                                    taskViewModel.addTask(Task(bucket = bucket))
+                                    focusedItemIndex = index + 1
+                                    taskViewModel.insertTask(task.id)
                                 },
                                 onTaskDelete = {
+                                    focusedItemIndex = index
                                     if (index == tasks.size - 1 && index != 0){
                                         focusedItemIndex = index - 1
                                     }
@@ -170,7 +171,7 @@ fun TaskScreen(
                             elevation = null,
                             onClick = {
                                 focusedItemIndex = tasks.size
-                                taskViewModel.addTask(Task(bucket = bucket))
+                                taskViewModel.addTask(bucket.id)
                             }
                         ){
                             Icon(Icons.Filled.Add, contentDescription = "Add Task")

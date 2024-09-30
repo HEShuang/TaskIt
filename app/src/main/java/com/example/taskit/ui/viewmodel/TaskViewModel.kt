@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface TaskViewModel {
     val isWriting: StateFlow<Boolean>
     fun buildTasksStateFlow(bucket: Bucket): StateFlow<List<Task>>
-    fun addTask(task: Task)
+    fun addTask(bucketId: Int)
+    fun insertTask(taskAboveId: Int)
     fun updateTaskContent(taskId: Int, content: String)
     fun updateTaskState(taskId: Int, isChecked: Boolean)
     fun deleteTask(taskId: Int)

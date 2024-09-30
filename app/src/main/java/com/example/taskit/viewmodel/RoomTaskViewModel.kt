@@ -47,10 +47,29 @@ class RoomTaskViewModel(
             .stateIn(scope, SharingStarted.Lazily, emptyList())
     }
 
-    override fun addTask(task: UiTask) {
+    override fun addTask(bucketId: Int) {
         launchWriteTask {
-            val lastOrder = taskDao.getLastTaskOrder(task.bucket.id, -1) ?: -1
-            taskDao.insertTask(task.toDbTask(-1,lastOrder + 1))
+            val lastOrder = taskDao.getLastTaskOrder(bucketId, -1) ?: -1
+            taskDao.insertTask(DbTask(bucketId = bucketId, parentId = -1, taskOrder = lastOrder + 1))
+        }
+    }
+
+    override fun insertTask(taskAboveId: Int) {
+        launchWriteTask {
+            val taskAbove = taskDao.getTask(taskAboveId) ?: return@launchWriteTask
+            val newTask = DbTask(
+                bucketId = taskAbove.bucketId,
+                parentId = taskAbove.parentId,
+                taskOrder = taskAbove.taskOrder + 1
+            )
+            val tasksToUpdate = mutableListOf<DbTask>()
+            val siblings = taskDao.getTasks(taskAbove.bucketId, taskAbove.parentId)
+            for(iTask in siblings){
+                if(iTask.taskOrder > taskAbove.taskOrder){
+                    tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
+                }
+            }
+            taskDao.upsertTasks(tasksToUpdate, newTask)
         }
     }
 
