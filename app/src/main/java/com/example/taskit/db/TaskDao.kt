@@ -22,21 +22,27 @@ interface TaskDao {
     suspend fun updateTaskState(taskId: Int, isChecked: Boolean)
 
     @Update
+    suspend fun updateTask(task: Task)
+
+    @Update
     suspend fun updateTasks(tasks: List<Task>)
 
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteTask(taskId: Int)
 
-    @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId ORDER BY task_order ASC")
-    suspend fun getTasks(bucketId: Int): List<Task>
-
     @Query("SELECT * FROM tasks WHERE id = :taskId")
     suspend fun getTask(taskId: Int): Task?
 
-    @Query("SELECT task_order FROM tasks WHERE bucket_id = :bucketId ORDER BY task_order DESC LIMIT 1")
-    suspend fun getLastTaskOrder(bucketId: Int): Int?
+    @Query("SELECT task_order FROM tasks WHERE bucket_id = :bucketId AND parent_id = :parentId ORDER BY task_order DESC LIMIT 1")
+    suspend fun getLastTaskOrder(bucketId: Int, parentId: Int): Int?
 
-    @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId ORDER BY task_order ASC")
+    @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId AND parent_id = :parentId ORDER BY task_order ASC")
+    suspend fun getTasks(bucketId: Int, parentId: Int): List<Task>
+
+    @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId ORDER BY parent_id ASC, task_order ASC")
+    suspend fun getTasks(bucketId: Int): List<Task>
+
+    @Query("SELECT * FROM tasks WHERE bucket_id = :bucketId ORDER BY parent_id ASC, task_order ASC")
     fun getTasksFlow(bucketId: Int): Flow<List<Task>>
 
 }

@@ -6,10 +6,14 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface TaskViewModel {
     val isWriting: StateFlow<Boolean>
-    fun buildTasksStateFlow(bucket: Bucket?): StateFlow<List<Task>>
+    fun buildTasksStateFlow(bucket: Bucket): StateFlow<List<Task>>
     fun addTask(task: Task)
     fun updateTaskContent(taskId: Int, content: String)
     fun updateTaskState(taskId: Int, isChecked: Boolean)
     fun deleteTask(taskId: Int)
-    fun moveTask(taskId: Int, toPos: Int, bucketId: Int)
+    fun reorderTask(taskId: Int, toTaskId: Int)
+    fun moveTaskToRoot(taskId: Int)
+    fun moveTaskToChild(taskId: Int, taskAboveId: Int)
+    fun onReorderStart(taskId: Int)
+    fun onReorderEnd(taskId: Int)
 }

@@ -1,6 +1,7 @@
 package com.example.taskit.ui
 
 import android.util.Log
+import androidx.collection.emptyLongSet
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -82,7 +83,7 @@ fun TaskScreen(
     val tasks by tasksStateFlow.collectAsStateWithLifecycle()
     val isWriting by taskViewModel.isWriting.collectAsStateWithLifecycle()
 
-    var reorderableTasks by remember(tasks) {mutableStateOf(tasks) }
+    var reorderableTasks by remember(tasks) { mutableStateOf(tasks) }
     var reorderToIndex by remember { mutableIntStateOf(-1) }
 
     LaunchedEffect(tasks) {
@@ -99,11 +100,6 @@ fun TaskScreen(
     }
 
     var focusedItemIndex by remember { mutableIntStateOf(0) }
-
-    val onDragEnd: (task: Task) -> Unit = {
-        Log.d("MoveTask", "onDragEnd: to -> $reorderToIndex")
-        taskViewModel.moveTask(it.id, reorderToIndex, bucket.id)
-    }
 
     // Edit task list content
     Scaffold(
@@ -122,19 +118,24 @@ fun TaskScreen(
                     }
                 )
                 LaunchedEffect(reorderableTasks) {
-                    Log.d("MoveTask", "List from UI (reorderableTasks): ${reorderableTasks.joinToString { it.content }}")
+                    Log.d("MoveTask Visibility", "List changed from UI (reorderableTasks): ${reorderableTasks.joinToString { it.content }}")
                 }
 
                 LazyColumn (
                     state = lazyListState,
                 ){
-                    Log.d("TaskScreen", "LazyColumn composition")
+                    Log.d("MoveTask Visibility", "LazyColumn composition")
                     itemsIndexed(reorderableTasks, key = { _, task -> task.id } ) { index, task ->
+                        //Log.d("MoveTask Visibility","------------------------------")
+                        //Log.d("MoveTask Visibility", "itemsIndexed composition: $task")
                         ReorderableItem(reorderableLazyListState, key = task.id) { isDragging ->
+                            //Log.d("MoveTask Visibility", "ReorderableItem composition: $task")
+                            if(!task.isVisible) return@ReorderableItem
+                            //Log.d("MoveTask Visibility", "TaskItem composition: $task")
+
                             TaskItem(
-                                uiIndex = index,
                                 task = task,
-                                isDragging = isDragging,
+                                isReordering = isDragging,
                                 onCheckedChange = { isChecked ->
                                     taskViewModel.updateTaskState(task.id, isChecked)
                                 },
@@ -154,13 +155,23 @@ fun TaskScreen(
                                     }
                                     taskViewModel.deleteTask(task.id)
                                 },
-                                onDragStart = {
+                                onReorderStart = {
                                     //reorderFromIndex = index
                                     Log.d("MoveTask", "-------------------------------------")
                                     Log.d("MoveTask", "onDragStart: pos$index: $task")
+                                    taskViewModel.onReorderStart(task.id)
                                 },
-                                onDragEnd = {
-                                    onDragEnd(task)
+                                onReorderEnd = {
+                                    taskViewModel.onReorderEnd(task.id)
+                                    taskViewModel.reorderTask(task.id, tasks[reorderToIndex].id)
+                                },
+                                onMoveToRoot = {
+                                    taskViewModel.moveTaskToRoot(task.id)
+                                },
+                                onMoveToChild = {
+                                    if(index > 0) {
+                                        taskViewModel.moveTaskToChild(task.id, tasks[index - 1].id)
+                                    }
                                 },
                                 requireFocus = index == focusedItemIndex
                             )
