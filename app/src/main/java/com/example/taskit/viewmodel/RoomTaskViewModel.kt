@@ -37,6 +37,7 @@ class RoomTaskViewModel(
                 Log.d("Flow change","---------------------------")
                 fun depthFirstTraverse(task: DbTask): List<UiTask> {
                     val children = tasksByParent[task.id] ?: emptyList()
+                    //Hide the children of the task on move
                     val isVisible = task.parentId != movingTaskId
                     Log.d("Flow change", "id:${task.id}, parent:${task.parentId}, order:${task.taskOrder}, content:${task.content}")
                     return listOf(task.toUiTask(bucket, isVisible)) + children.flatMap { childTask -> depthFirstTraverse(childTask) }
@@ -57,19 +58,34 @@ class RoomTaskViewModel(
     override fun insertTask(taskAboveId: Int) {
         launchWriteTask {
             val taskAbove = taskDao.getTask(taskAboveId) ?: return@launchWriteTask
-            val newTask = DbTask(
-                bucketId = taskAbove.bucketId,
-                parentId = taskAbove.parentId,
-                taskOrder = taskAbove.taskOrder + 1
-            )
-            val tasksToUpdate = mutableListOf<DbTask>()
-            val siblings = taskDao.getTasks(taskAbove.bucketId, taskAbove.parentId)
-            for(iTask in siblings){
-                if(iTask.taskOrder > taskAbove.taskOrder){
-                    tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
-                }
+            val taskAboveChildren = taskDao.getTasks(taskAbove.bucketId, taskAbove.id)
+
+            //If taskAbove has children, insert new task as his first child
+            //Increase taskOrder of original children
+            if(taskAboveChildren.isNotEmpty()){
+                val newTask = DbTask(
+                    bucketId = taskAbove.bucketId,
+                    parentId = taskAboveId,
+                )
+                taskDao.upsertTasks(taskAboveChildren.map { task -> task.copy(taskOrder = task.taskOrder + 1) }, newTask)
             }
-            taskDao.upsertTasks(tasksToUpdate, newTask)
+            //Otherwise, insert task after it and increase taskOrder of its siblings below
+            else{
+                val newTask = DbTask(
+                    bucketId = taskAbove.bucketId,
+                    parentId = taskAbove.parentId,
+                    taskOrder = taskAbove.taskOrder + 1
+                )
+                val tasksToUpdate = mutableListOf<DbTask>()
+                val siblings = taskDao.getTasks(taskAbove.bucketId, taskAbove.parentId)
+                for(iTask in siblings){
+                    if(iTask.taskOrder > taskAbove.taskOrder){
+                        tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
+                    }
+                }
+                taskDao.upsertTasks(tasksToUpdate, newTask)
+            }
+
         }
     }
 
@@ -91,9 +107,9 @@ class RoomTaskViewModel(
         }
     }
 
-    override fun reorderTask(taskId: Int, toTaskId: Int) {
+    override fun reorderTask(fromTaskId: Int, toTaskId: Int) {
         launchWriteTask {
-            val fromTask = taskDao.getTask(taskId) ?: return@launchWriteTask
+            val fromTask = taskDao.getTask(fromTaskId) ?: return@launchWriteTask
             val toTask = taskDao.getTask(toTaskId) ?: return@launchWriteTask
 
             val fromOrder = fromTask.taskOrder
@@ -111,11 +127,11 @@ class RoomTaskViewModel(
                 val isMoveDown = fromOrder < toOrder
                 val toParentChildren = taskDao.getTasks(bucketId, toParentId)
                 for(iTask in toParentChildren){
-                    //If moving down, the tasks in between will decrease their order
+                    //If moving down, decrease taskOrder of the tasks in between
                     if (isMoveDown && iTask.taskOrder in fromOrder + 1..toOrder){
                         tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder - 1)
                     }
-                    //If moving up, the tasks in between will increase their order
+                    //If moving up, increase taskOrder of the tasks in between
                     else if(iTask.taskOrder in toOrder..<fromOrder)
                         tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
                 }
@@ -129,38 +145,50 @@ class RoomTaskViewModel(
                 val compareToOrder = if(toParentId < 0) toOrder else {
                     taskDao.getTask(toParentId)?.taskOrder ?: -1
                 }
-                //If moving up, insert the task before the destination task
+                val fromTaskChildren = taskDao.getTasks(bucketId, fromTaskId)
+                //If moving up, insert the task and its children before the destination task
                 //Increase taskOrder of destination task and its siblings below
                 if(compareFromOrder >= compareToOrder) {//Moving Up
-                    tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = toOrder)
-
+                    var newOrder = toOrder
+                    tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = newOrder++)
+                    for(iTask in fromTaskChildren){
+                        tasksToUpdate += iTask.copy(parentId = toParentId, taskOrder = newOrder++)
+                    }
                     val toParentChildren = taskDao.getTasks(bucketId, toParentId)
                     for(iTask in toParentChildren){
                         if(iTask.taskOrder >= toOrder){
-                            tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
+                            tasksToUpdate += iTask.copy(taskOrder = newOrder++)
                         }
                     }
 
                 }
                 //Moving down
                 else{
-                    //If the destination task has children, insert the task as it's first child
-                    //Increase taskOrder of the original children
-                    val destTaskChildren = taskDao.getTasks(bucketId, toTaskId)
-                    if(destTaskChildren.isNotEmpty()){
-                        tasksToUpdate += fromTask.copy(parentId = toTaskId, taskOrder = 0)
-                        for(iTask in destTaskChildren){
-                            tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
+                    //If the destination task has children, insert the task and its children on top of destination task's children
+                    //Otherwise, insert the task and its children below the destination task
+                    val toTaskChildren = taskDao.getTasks(bucketId, toTaskId)
+                    if(toTaskChildren.isNotEmpty()){
+                        var newOrder = 0
+                        tasksToUpdate += fromTask.copy(parentId = toTaskId, taskOrder = newOrder++)
+                        for(iTask in fromTaskChildren){
+                            tasksToUpdate += iTask.copy(parentId = toTaskId, taskOrder = newOrder++)
+                        }
+                        //Increase taskOrder of the destination task's original children
+                        for(iTask in toTaskChildren){
+                            tasksToUpdate += iTask.copy(taskOrder = newOrder++)
                         }
                     }
-                    //Otherwise, insert the task below the destination task
-                    //Increase taskOrder of the siblings below
                     else {
-                        tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = toOrder + 1)
+                        var newOrder = toOrder + 1
+                        tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = newOrder++)
+                        for(iTask in fromTaskChildren){
+                            tasksToUpdate += iTask.copy(parentId = toParentId, taskOrder = newOrder++)
+                        }
+                        //Increase taskOrder of the destination task's siblings below
                         val toParentChildren = taskDao.getTasks(bucketId, toParentId)
                         for(iTask in toParentChildren){
                             if(iTask.taskOrder > toOrder){
-                                tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
+                                tasksToUpdate += iTask.copy(taskOrder = newOrder++)
                             }
                         }
                     }
@@ -171,23 +199,27 @@ class RoomTaskViewModel(
         }
     }
 
+    //Example: move C to root
+    //Change D's parent to C
+    //Increase the taskOrder of E and F
+    // A           A
+    // -B          -B
+    // -C          C
+    // -D          -D
+    // E           E
+    // F           F
     override fun moveTaskToRoot(taskId: Int) {
         launchWriteTask {
             val task = taskDao.getTask(taskId) ?: return@launchWriteTask
+            Log.d("MoveTask", "Move task to root: $task")
+            if(task.parentId < 0){
+                Log.d("MoveTask", "Do nothing: it is already a root task")
+                return@launchWriteTask
+            }
             val parentTask = taskDao.getTask(task.parentId) ?: return@launchWriteTask
 
-            //Example: move C to root
-            //Change D's parent to C
-            //Increase the taskOrder of E and F
-            // A           A
-            // -B          -B
-            // -C          C
-            // -D          -D
-            // E           E
-            // F           F
             val tasksToUpdate = mutableListOf<DbTask>()
-
-            //Change the parent of its siblings below
+            //The target task becomes the parent of its siblings below
             val children = taskDao.getTasks(task.bucketId, parentTask.id)
             for(iTask in children){
                 if(iTask.taskOrder > task.taskOrder){
@@ -195,10 +227,10 @@ class RoomTaskViewModel(
                 }
             }
 
-            //Insert the task below its old parent
+            //Move the task to root below its old parent
             tasksToUpdate += task.copy(parentId = -1, taskOrder = parentTask.taskOrder + 1)
 
-            //Move down the root tasks that below its old parent
+            //Increase the taskOrder of the root tasks that below its old parent
             val rootTasks = taskDao.getTasks(task.bucketId, - 1)
             for(iTask in rootTasks){
                 if(iTask.taskOrder > parentTask.taskOrder)
@@ -209,17 +241,36 @@ class RoomTaskViewModel(
         }
     }
 
+    //Example: move C to child
+    //Case 1 the task above B is a root task:
+    //Task C and D become B's child
+    // A           A
+    // B           B
+    // C           -C
+    // -D          -D
+    // E           E
+    //Case 2 the task above B is also a child task:
+    //Task C and D become B's sibling,
+    // A           A
+    // -B          -B
+    // C           -C
+    // -D          -D
+    // E           E
     override fun moveTaskToChild(taskId: Int, taskAboveId: Int) {
         launchWriteTask {
             val task = taskDao.getTask(taskId) ?: return@launchWriteTask
-            val taskAbove = taskDao.getTask(taskAboveId) ?: return@launchWriteTask
-
-            var newParentId = taskAbove.id
-            var newOrder = 0
-            if(taskAbove.parentId >= 0){ //If the task above is a child task
-                newParentId = taskAbove.parentId
-                newOrder = taskAbove.taskOrder + 1
+            Log.d("MoveTask", "move task to child: $task")
+            if(task.parentId >= 0) {
+                Log.d("MoveTask", "do nothing: it is already a child")
+                return@launchWriteTask
             }
+
+            //If the task above is a root task, add the target task as its child
+            //Otherwise, add the target task as its sibling
+            val taskAbove = taskDao.getTask(taskAboveId) ?: return@launchWriteTask
+            val taskAboveIsRoot = taskAbove.parentId < 0
+            val newParentId = if (taskAboveIsRoot) taskAbove.id else taskAbove.parentId
+            var newOrder = if (taskAboveIsRoot) 0 else taskAbove.taskOrder + 1
 
             //If the target task has children, append them to the new parent as well
             val children = taskDao.getTasks(task.bucketId, task.id)
@@ -232,7 +283,6 @@ class RoomTaskViewModel(
             else {
                 taskDao.updateTask(task.copy(parentId = newParentId, taskOrder = newOrder))
             }
-
         }
     }
 

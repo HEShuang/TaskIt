@@ -12,7 +12,7 @@ interface TaskViewModel {
     fun updateTaskContent(taskId: Int, content: String)
     fun updateTaskState(taskId: Int, isChecked: Boolean)
     fun deleteTask(taskId: Int)
-    fun reorderTask(taskId: Int, toTaskId: Int)
+    fun reorderTask(fromTaskId: Int, toTaskId: Int)
     fun moveTaskToRoot(taskId: Int)
     fun moveTaskToChild(taskId: Int, taskAboveId: Int)
     fun onReorderStart(taskId: Int)
