@@ -28,7 +28,9 @@ abstract class AppDatabase: RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "tasks.db"
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigration()
+                    .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
+                    .build()
                 INSTANCE = instance
                 instance
             }
