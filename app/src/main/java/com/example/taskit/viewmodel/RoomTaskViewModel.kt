@@ -2,7 +2,6 @@ package com.example.taskit.viewmodel
 
 import android.util.Log
 import com.example.taskit.db.TaskDao
-import com.example.taskit.ui.model.Task
 import com.example.taskit.ui.model.Bucket as UiBucket
 import com.example.taskit.ui.model.Task as UiTask
 import com.example.taskit.db.model.Task as DbTask
@@ -13,8 +12,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -112,11 +109,21 @@ class RoomTaskViewModel(
             val fromTask = taskDao.getTask(fromTaskId) ?: return@launchWriteTask
             val toTask = taskDao.getTask(toTaskId) ?: return@launchWriteTask
 
+            Log.d("MoveTask", "from Task ${fromTask.content} to Task ${toTask.content}")
+
             val fromOrder = fromTask.taskOrder
             val toOrder = toTask.taskOrder
             val fromParentId = fromTask.parentId
             val toParentId = toTask.parentId
-            if(fromParentId == toParentId && fromOrder == toOrder) return@launchWriteTask
+
+            if(fromParentId == toParentId && fromOrder == toOrder) {
+                Log.d("MoveTask", "Do nothing: the same task")
+                return@launchWriteTask
+            }
+            if(fromTaskId == toParentId){
+                Log.d("MoveTask", "Do nothing: move to its own child")
+                return@launchWriteTask
+            }
 
             val bucketId = fromTask.bucketId
             val tasksToUpdate = mutableListOf<DbTask>()
@@ -162,7 +169,6 @@ class RoomTaskViewModel(
                     }
 
                 }
-                //Moving down
                 else{
                     //If the destination task has children, insert the task and its children on top of destination task's children
                     //Otherwise, insert the task and its children below the destination task
@@ -261,7 +267,7 @@ class RoomTaskViewModel(
             val task = taskDao.getTask(taskId) ?: return@launchWriteTask
             Log.d("MoveTask", "move task to child: $task")
             if(task.parentId >= 0) {
-                Log.d("MoveTask", "do nothing: it is already a child")
+                Log.d("MoveTask", "Do nothing: it is already a child")
                 return@launchWriteTask
             }
 
