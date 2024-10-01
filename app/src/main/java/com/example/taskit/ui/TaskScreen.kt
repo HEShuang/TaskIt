@@ -147,17 +147,19 @@ fun TaskScreen(
                                 },
                                 onReorderEnd = {
                                     taskViewModel.onReorderEnd(task.id)
-                                    taskViewModel.reorderTask(task.id, tasks[reorderToIndex].id)
+                                    if(reorderToIndex in 0..< tasks.size)
+                                        taskViewModel.reorderTask(task.id, tasks[reorderToIndex].id)
                                 },
                                 onMoveToRoot = {
                                     taskViewModel.moveTaskToRoot(task.id)
                                 },
                                 onMoveToChild = {
-                                    if(index > 0) {
+                                    if(index in 1..< tasks.size) {
                                         taskViewModel.moveTaskToChild(task.id, tasks[index - 1].id)
                                     }
                                 },
-                                requireFocus = index == focusedItemIndex
+                                isFirstTask = index == 0,
+                                requireFocus = index == focusedItemIndex,
                             )
                         }
                     }

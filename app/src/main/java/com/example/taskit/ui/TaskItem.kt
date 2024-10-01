@@ -69,7 +69,8 @@ fun ReorderableCollectionItemScope.TaskItem(
     onReorderEnd: () -> Unit,
     onMoveToRoot: () -> Unit,
     onMoveToChild: () -> Unit,
-    requireFocus: Boolean
+    isFirstTask: Boolean,
+    requireFocus: Boolean,
 ) {
     val direction = LocalLayoutDirection.current
     var contentFieldValue by remember (task.id){
@@ -81,6 +82,7 @@ fun ReorderableCollectionItemScope.TaskItem(
     val density = LocalDensity.current
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val indentState = remember (task.isChild){
+        Log.d("MoveTask", "calculate indentState")
         AnchoredDraggableState(
             initialValue = if(task.isChild) IndentAnchors.Child else IndentAnchors.Root,
             anchors = DraggableAnchors {
@@ -100,8 +102,14 @@ fun ReorderableCollectionItemScope.TaskItem(
 
     LaunchedEffect(indentState.currentValue) {
         when (indentState.currentValue ) {
-            IndentAnchors.Root -> onMoveToRoot()
-            IndentAnchors.Child -> onMoveToChild()
+            IndentAnchors.Root -> {
+                Log.d("MoveTask", "Task ${task.content} indentState change to Root")
+                onMoveToRoot()
+            }
+            IndentAnchors.Child -> {
+                Log.d("MoveTask", "Task ${task.content} indentState change to Child")
+                onMoveToChild()
+            }
         }
     }
 
@@ -109,14 +117,15 @@ fun ReorderableCollectionItemScope.TaskItem(
         modifier = Modifier
             .fillMaxWidth()
             //.background(if (isDragging) Color.Red else Color.Transparent)
-            .offset {
+/*            .offset {
                 IntOffset(
                     x = indentState
                         .requireOffset()
                         .roundToInt(),
                     y = 0
                 )
-            }
+            }*/
+            .padding(start = if(indentState.currentValue == IndentAnchors.Child) 40.dp else 0.dp)
             .border(
                 if (isReordering)
                     BorderStroke(1.dp, Color.LightGray)
@@ -142,6 +151,7 @@ fun ReorderableCollectionItemScope.TaskItem(
                 .anchoredDraggable(
                     state = indentState,
                     orientation = Orientation.Horizontal,
+                    enabled = !isFirstTask,
                 )
                 .padding(6.dp),
             contentDescription = "Drag Drop",
