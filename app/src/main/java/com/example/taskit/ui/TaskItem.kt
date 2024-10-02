@@ -12,7 +12,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -23,7 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,13 +41,11 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.example.taskit.R
 import com.example.taskit.ui.model.Task
 import sh.calvin.reorderable.ReorderableCollectionItemScope
-import kotlin.math.roundToInt
 
 enum class IndentAnchors {
     Root,
@@ -77,14 +73,14 @@ fun ReorderableCollectionItemScope.TaskItem(
         mutableStateOf(task.content.toTextFieldValue(direction))
     }
     val focusRequester = remember { FocusRequester() }
-    var isFocused by remember { mutableStateOf(requireFocus) }
+    var isFocused by remember { mutableStateOf(false) }
 
+    val taskIndentAnchor = if (task.isChild) IndentAnchors.Child else IndentAnchors.Root
     val density = LocalDensity.current
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val indentState = remember (task.isChild){
-        Log.d("MoveTask", "calculate indentState")
         AnchoredDraggableState(
-            initialValue = if(task.isChild) IndentAnchors.Child else IndentAnchors.Root,
+            initialValue = taskIndentAnchor,
             anchors = DraggableAnchors {
                 IndentAnchors.Child at with(density) { 40.dp.toPx() }
                 IndentAnchors.Root at 0f
@@ -96,36 +92,29 @@ fun ReorderableCollectionItemScope.TaskItem(
         )
     }
 
-    LaunchedEffect(contentFieldValue.text) {
-        onContentChange(contentFieldValue.text)
-    }
-
     LaunchedEffect(indentState.currentValue) {
-        when (indentState.currentValue ) {
-            IndentAnchors.Root -> {
-                Log.d("MoveTask", "Task ${task.content} indentState change to Root")
-                onMoveToRoot()
-            }
-            IndentAnchors.Child -> {
-                Log.d("MoveTask", "Task ${task.content} indentState change to Child")
-                onMoveToChild()
+        if (indentState.currentValue != taskIndentAnchor) {
+            when (indentState.currentValue) {
+                IndentAnchors.Root -> {
+                    Log.d("MoveTask", "Task ${task.content} indentState change to Root")
+                    onMoveToRoot()
+                }
+                IndentAnchors.Child -> {
+                    Log.d("MoveTask", "Task ${task.content} indentState change to Child")
+                    onMoveToChild()
+                }
             }
         }
+    }
+
+    LaunchedEffect(contentFieldValue.text) {
+        onContentChange(contentFieldValue.text)
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            //.background(if (isDragging) Color.Red else Color.Transparent)
-/*            .offset {
-                IntOffset(
-                    x = indentState
-                        .requireOffset()
-                        .roundToInt(),
-                    y = 0
-                )
-            }*/
-            .padding(start = if(indentState.currentValue == IndentAnchors.Child) 40.dp else 0.dp)
+            .padding(start = if (indentState.currentValue == IndentAnchors.Child) 40.dp else 0.dp)
             .border(
                 if (isReordering)
                     BorderStroke(1.dp, Color.LightGray)
@@ -179,14 +168,11 @@ fun ReorderableCollectionItemScope.TaskItem(
             ),
             keyboardActions = KeyboardActions(onDone = { onTaskAdd() })
         )
-
-
         if(isFocused){
             IconButton(onClick = onTaskDelete) {
                 Icon(Icons.Default.Close,contentDescription = "Delete")
             }
         }
-
     }
     LaunchedEffect(requireFocus){
         if(requireFocus){
