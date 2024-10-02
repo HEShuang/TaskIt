@@ -10,4 +10,5 @@ interface BucketViewModel
     fun addBucket( nTasks: Int = 0, onComplete: (bucket: Bucket) -> Unit)
     fun updateBucket(bucket: Bucket)
     fun deleteBucket(bucket: Bucket)
+    fun deleteBuckets(bucketIds: List<Int>)
 }

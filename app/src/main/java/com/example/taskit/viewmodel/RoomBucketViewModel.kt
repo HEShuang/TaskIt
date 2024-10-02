@@ -64,6 +64,12 @@ class RoomBucketViewModel(
         }
     }
 
+    override fun deleteBuckets(bucketIds: List<Int>) {
+        scope.launch {
+            bucketDao.deleteBuckets(bucketIds)
+        }
+    }
+
     private fun DbBucket.toUiBucket() = UiBucket(
         id = id,
         name = name,

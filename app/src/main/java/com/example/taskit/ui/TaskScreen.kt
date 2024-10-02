@@ -25,16 +25,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,12 +69,13 @@ data class StableState(
     var recomposition: Int = 0
 )
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
     taskViewModel: TaskViewModel,
     bucket: Bucket,
     updateBucket: (bucket: Bucket)->Unit,
+    onDeleteBucket: ()->Unit,
 ) {
     var stableState = remember { StableState() }
     stableState.recomposition++
@@ -99,6 +104,15 @@ fun TaskScreen(
 
     // Edit task list content
     Scaffold(
+        topBar = {
+            TaskScreenTopBar(
+                bucket = bucket,
+                onBucketNameChange = {newName ->
+                    updateBucket(bucket.copy(name = newName))
+                },
+                onDeleteBucket = onDeleteBucket
+            )
+        },
         content = { paddingValues ->
             Column(
                 modifier = Modifier
@@ -107,13 +121,6 @@ fun TaskScreen(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start
             ) {
-                TaskScreenBucket(
-                    name = bucket.name,
-                    onTextChange = {newName ->
-                        updateBucket(bucket.copy(name = newName))
-                    }
-                )
-
                 LazyColumn (
                     state = lazyListState,
                 ){
@@ -163,7 +170,6 @@ fun TaskScreen(
                             )
                         }
                     }
-
                     item {
                         Button(
                             colors = ButtonDefaults.buttonColors(

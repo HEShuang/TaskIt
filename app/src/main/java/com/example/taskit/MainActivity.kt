@@ -104,9 +104,17 @@ fun MyApp(bucketViewModel: BucketViewModel, taskViewModel: TaskViewModel) {
                 }
             }
             if(bucket != null){
-                TaskScreen(taskViewModel, bucket!!) { newBucket ->
-                    bucketViewModel.updateBucket(newBucket)
-                }
+                TaskScreen(
+                    taskViewModel = taskViewModel,
+                    bucket = bucket!!,
+                    updateBucket = { newBucket ->
+                        bucketViewModel.updateBucket(newBucket)
+                    },
+                    onDeleteBucket = {
+                        bucketViewModel.deleteBucket(bucket!!)
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }
