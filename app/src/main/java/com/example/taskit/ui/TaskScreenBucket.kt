@@ -33,12 +33,14 @@ fun TaskScreenBucket(
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 2.dp, vertical = 6.dp)
+            .padding(start = 12.dp, top = 24.dp, end = 12.dp, bottom = 6.dp)
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
             },
         singleLine = true,
-        textStyle = MaterialTheme.typography.titleMedium,
+        textStyle = MaterialTheme.typography.titleLarge.copy(
+            color = MaterialTheme.colorScheme.onPrimary
+        ),
     )
 }

@@ -69,7 +69,7 @@ fun HomeBucketItem(
                 .padding(horizontal = 2.dp, vertical = 6.dp),
             text = bucket.name,
             style = MaterialTheme.typography.titleMedium,
-            //color = MaterialTheme.colorScheme.onPrimary,
+            color = MaterialTheme.colorScheme.onBackground,
         )
         //List of tasks
         if(nTasks > 0){
@@ -80,7 +80,7 @@ fun HomeBucketItem(
                         .padding(horizontal = 2.dp),
                     text = tasks[i].content,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
             }
         }
@@ -100,7 +100,7 @@ fun HomeBucketItem(
                 Text(
                     text = "$nRest items",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
             }
         }
