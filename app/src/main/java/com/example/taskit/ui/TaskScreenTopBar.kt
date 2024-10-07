@@ -3,8 +3,8 @@ package com.example.taskit.ui
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -12,7 +12,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,7 +29,8 @@ import com.example.taskit.ui.model.Bucket
 fun TaskScreenTopBar(
     bucket: Bucket,
     onBucketNameChange: (newName: String) -> Unit,
-    onDeleteBucket: () -> Unit
+    onDeleteBucket: () -> Unit,
+    onGoBack: ()->Unit,
 ){
     var text by remember { mutableStateOf(bucket.name) }
     val focusRequester = remember { FocusRequester() }
@@ -59,6 +59,16 @@ fun TaskScreenTopBar(
                 ),
             )
         },
+        navigationIcon = {
+            IconButton(
+                onClick = onGoBack
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+        },
         actions = {
             IconButton(onClick = { showMenu = !showMenu }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "Menu")
@@ -73,10 +83,6 @@ fun TaskScreenTopBar(
                         showMenu = false
                         showDeleteDialog = true
                     }
-                )
-                DropdownMenuItem(
-                    text = { Text("About") },
-                    onClick = { /* Handle about click */ }
                 )
             }
         }

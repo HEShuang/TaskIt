@@ -3,6 +3,8 @@ package com.example.taskit
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,69 +54,81 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MyApp(bucketViewModel: BucketViewModel, taskViewModel: TaskViewModel) {
     val navController = rememberNavController()
 
-    // Set up the navigation between screens
-    NavHost(navController = navController, startDestination = Screen.HomeScreen.route) {
-
-        composable(Screen.HomeScreen.route){
-            HomeScreen(
-                bucketViewModel = bucketViewModel,
-                taskViewModel = taskViewModel,
-                onAddBucket = {
-                    // Navigate to TaskScreen (arg bucketId=-1) when Add button is clicked
-                    val bucketId = -1
-                    navController.navigate(Screen.TaskScreen.withArgs(bucketId.toString()))
-                },
-                onLoadBucket = { bucketId ->
-                    //Navigate to TaskScreen which loads all tasks of the clicked bucket
-                    navController.navigate(Screen.TaskScreen.withArgs(bucketId.toString()))
-                },
-            )
-        }
-
-        composable(
-            route = Screen.TaskScreen.route + "/{bucketId}",
-            arguments = listOf(
-                navArgument("bucketId"){
-                    type = NavType.IntType
-                    defaultValue = -1
-                    nullable = false
-                }
-            )
+    SharedTransitionLayout() {
+        NavHost(
+            navController = navController,
+            startDestination = Screen.HomeScreen.route,
+            modifier = Modifier.fillMaxSize(),
         ) {
-            entry->
-            //Get bucketId passed by arguments
-            val bucketId = entry.arguments?.getInt("bucketId")!!
-            var bucket by remember { mutableStateOf<Bucket?>(null)}
-
-            //add new bucket (bucketId == -1) or get bucket by bucketId
-            LaunchedEffect(Unit) {
-                if(bucketId < 0) {
-                    bucketViewModel.addBucket {
-                        bucket = it
-                    }
-                }
-                else {
-                    bucketViewModel.getBucket(bucketId) {
-                        bucket = it
-                    }
-                }
-            }
-            if(bucket != null){
-                TaskScreen(
+            composable(Screen.HomeScreen.route){
+                HomeScreen(
+                    bucketViewModel = bucketViewModel,
                     taskViewModel = taskViewModel,
-                    bucket = bucket!!,
-                    updateBucket = { newBucket ->
-                        bucketViewModel.updateBucket(newBucket)
+                    onAddBucket = {
+                        // Navigate to TaskScreen (arg bucketId=-1) when Add button is clicked
+                        val bucketId = -1
+                        navController.navigate(Screen.TaskScreen.withArgs(bucketId.toString()))
                     },
-                    onDeleteBucket = {
-                        bucketViewModel.deleteBucket(bucket!!)
-                        navController.popBackStack()
+                    onLoadBucket = { bucketId ->
+                        //Navigate to TaskScreen which loads all tasks of the clicked bucket
+                        navController.navigate(Screen.TaskScreen.withArgs(bucketId.toString()))
+                    },
+                    animatedVisibilityScope = this@composable,
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                )
+            }
+
+            composable(
+                route = Screen.TaskScreen.route + "/{bucketId}",
+                arguments = listOf(
+                    navArgument("bucketId"){
+                        type = NavType.IntType
+                        defaultValue = -1
+                        nullable = false
                     }
                 )
+            ) {
+                    entry->
+                //Get bucketId passed by arguments
+                val bucketId = entry.arguments?.getInt("bucketId")!!
+                var bucket by remember { mutableStateOf<Bucket?>(null)}
+
+                //add new bucket (bucketId == -1) or get bucket by bucketId
+                LaunchedEffect(Unit) {
+                    if(bucketId < 0) {
+                        bucketViewModel.addBucket {
+                            bucket = it
+                        }
+                    }
+                    else {
+                        bucketViewModel.getBucket(bucketId) {
+                            bucket = it
+                        }
+                    }
+                }
+                if(bucket != null){
+                    TaskScreen(
+                        taskViewModel = taskViewModel,
+                        bucket = bucket!!,
+                        updateBucket = { newBucket ->
+                            bucketViewModel.updateBucket(newBucket)
+                        },
+                        onDeleteBucket = {
+                            bucketViewModel.deleteBucket(bucket!!)
+                            navController.popBackStack()
+                        },
+                        onGoBack = {
+                            navController.popBackStack()
+                        },
+                        animatedVisibilityScope = this@composable,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                    )
+                }
             }
         }
     }

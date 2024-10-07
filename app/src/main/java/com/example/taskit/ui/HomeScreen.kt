@@ -1,5 +1,13 @@
 package com.example.taskit.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,9 +28,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,96 +41,118 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.taskit.ui.viewmodel.BucketViewModel
 import com.example.taskit.ui.viewmodel.TaskViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
     bucketViewModel: BucketViewModel,
     taskViewModel: TaskViewModel,
     onAddBucket: ()->Unit,
     onLoadBucket: (bucketId: Int)->Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val nMaxTasksInPreview = 5
     val buckets by bucketViewModel.buckets.collectAsStateWithLifecycle()
-    var selection by remember { mutableStateOf(emptyList<Int>()) }
-    var showMenu by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selection by rememberSaveable { mutableStateOf(emptySet<Int>()) }
+    var showMenu by rememberSaveable { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            if (selection.isNotEmpty()) {
-                TopAppBar(
-                    title = { Text("${selection.size}") },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                selection = emptyList()
-                            }
-                        ) {
-                            Icon(Icons.Default.Close, contentDescription = "Deselect")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { showMenu = !showMenu }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Delete") },
+    with(sharedTransitionScope){
+        Scaffold(
+            topBar = {
+                AnimatedVisibility(
+                    visible = selection.isNotEmpty(),
+                    enter = slideInVertically() + expandVertically (expandFrom = Alignment.Top),
+                    exit = slideOutVertically() + shrinkVertically()
+                ) {
+                    TopAppBar(
+                        title = { Text("${selection.size}") },
+                        navigationIcon = {
+                            IconButton(
                                 onClick = {
-                                    showMenu = false
-                                    showDeleteDialog = true
+                                    selection = emptySet()
                                 }
-                            )
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Deselect")
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { showMenu = !showMenu }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Delete") },
+                                    onClick = {
+                                        showMenu = false
+                                        showDeleteDialog = true
+                                    }
+                                )
+                            }
                         }
+                    )
+                }
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = onAddBucket,
+                    content = {
+                        Icon(Icons.Default.Add, contentDescription = "Add")
                     }
                 )
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddBucket,
-                content = {
-                    Icon(Icons.Default.Add, contentDescription = "Add")
+            },
+            floatingActionButtonPosition = FabPosition.End, // Aligns to the bottom-right
+            content = { paddingValues ->
+                LazyColumn (
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                ){
+                    items(buckets) {bucket ->
+                        val isSelectedState = remember {
+                            derivedStateOf {
+                                bucket.id in selection
+                            }
+                        }
+
+                        HomeBucketItem(
+                            modifier = Modifier.sharedElement(
+                                state = rememberSharedContentState(key = bucket.id.toString()),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                            ),
+                            bucket = bucket,
+                            nMaxTasks = nMaxTasksInPreview,
+                            taskViewModel = taskViewModel,
+                            onClick = {
+                                onLoadBucket(bucket.id)
+                            },
+                            isSelectedState = isSelectedState,
+                            switchSelection = {
+                                selection = if (bucket.id !in selection)
+                                    selection + bucket.id
+                                else
+                                    selection - bucket.id
+                            },
+                        )
+                    }
                 }
-            )
-        },
-        floatingActionButtonPosition = FabPosition.End, // Aligns to the bottom-right
-        content = { paddingValues ->
-            LazyColumn (modifier = Modifier.padding(paddingValues)){
-                items(buckets) {bucket ->
-                    HomeBucketItem(
-                        bucket = bucket,
-                        nMaxTasks = nMaxTasksInPreview,
-                        taskViewModel = taskViewModel,
-                        onClick = {
-                            onLoadBucket(bucket.id)
-                        },
-                        requestSelect = bucket.id in selection,
-                        onSelect = { isSelected ->
-                            selection = if(isSelected)
-                                selection + bucket.id
-                            else
-                                selection - bucket.id
-                        },
-                    )
+                if(buckets.isEmpty()){
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "You don't have any notes yet",
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
-            }
-            if(buckets.isEmpty()){
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "You don't have any notes yet",
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-        },
-    )
+            },
+        )
+    }
 
     if(showDeleteDialog){
         DialogAlertDelete(
@@ -130,8 +162,8 @@ fun HomeScreen(
             },
             onDelete = {
                 if(selection.isNotEmpty()){
-                    bucketViewModel.deleteBuckets(selection)
-                    selection = emptyList()
+                    bucketViewModel.deleteBuckets(selection.toList())
+                    selection = emptySet()
                 }
             },
         )
