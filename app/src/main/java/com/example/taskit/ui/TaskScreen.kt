@@ -43,7 +43,8 @@ import com.example.taskit.ui.viewmodel.TaskViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+@OptIn(
+    ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
     ExperimentalSharedTransitionApi::class
 )
 @Composable
@@ -83,8 +84,7 @@ fun TaskScreen(
                 .sharedElement(
                     state = rememberSharedContentState(key = bucket.id.toString()),
                     animatedVisibilityScope = animatedVisibilityScope,
-                )
-            ,
+                ),
             topBar = {
                 TaskScreenTopBar(
                     bucket = bucket,
@@ -108,7 +108,9 @@ fun TaskScreen(
                     LazyColumn(
                         state = lazyListState,
                     ) {
-                        itemsIndexed(reorderableTasks, key = { _, task -> task.id }) { index, task ->
+                        itemsIndexed(
+                            reorderableTasks,
+                            key = { _, task -> task.id }) { index, task ->
                             ReorderableItem(reorderableLazyListState, key = task.id) { isDragging ->
                                 if (!task.isVisible) return@ReorderableItem
                                 TaskItem(

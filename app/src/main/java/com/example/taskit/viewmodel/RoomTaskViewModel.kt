@@ -28,7 +28,10 @@ class RoomTaskViewModel(
     override fun buildTasksStateFlow(bucket: UiBucket): StateFlow<List<UiTask>> {
         return combine(repo.getTasksFlow(bucket.id), taskOnReorder) { tasks, taskOnReorder ->
             tasks.map { task ->
-                task.toUiTask(bucket, task.parentId != taskOnReorder) //Hide the children of the task on reordering
+                task.toUiTask(
+                    bucket,
+                    task.parentId != taskOnReorder
+                ) //Hide the children of the task on reordering
             }
         }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     }

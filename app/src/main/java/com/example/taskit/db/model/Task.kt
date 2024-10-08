@@ -28,7 +28,7 @@ data class Task(
     val bucketId: Int = 0, //Each task belongs to a bucket/group
 
     @ColumnInfo(name = "parent_id")
-    val parentId : Int = -1, // parentId = -1 means it is a root task
+    val parentId: Int = -1, // parentId = -1 means it is a root task
 
     @ColumnInfo(name = "task_order")
     val taskOrder: Int = 0, // Index under its parent task
@@ -38,9 +38,16 @@ data class Task(
     @ColumnInfo(name = "is_checked")
     val isChecked: Boolean = false,
 
-){
+    ) {
     companion object {
-        fun create(id: Int, bucketId: Int, parentId: Int, taskOrder: Int, content:String, isChecked: Boolean): Task {
+        fun create(
+            id: Int,
+            bucketId: Int,
+            parentId: Int,
+            taskOrder: Int,
+            content: String,
+            isChecked: Boolean
+        ): Task {
             require(bucketId >= 0)
             require(parentId >= -1)
             require(taskOrder >= 0)

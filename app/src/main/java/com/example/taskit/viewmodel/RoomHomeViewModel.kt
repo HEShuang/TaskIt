@@ -19,15 +19,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class RoomHomeViewModel(
-   private val repo: AppRepository
-): HomeViewModel, ViewModel(){
+    private val repo: AppRepository
+) : HomeViewModel, ViewModel() {
 
     override val buckets: StateFlow<List<UiBucket>> = repo.getBucketsFlow()
         .map { buckets -> buckets.map { it.toUiBucket() } }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     override fun buildTasksStateFlow(bucket: UiBucket): StateFlow<List<UiTask>> {
-        return repo.getTasksFlow(bucket.id).map {tasks ->
+        return repo.getTasksFlow(bucket.id).map { tasks ->
             tasks.map { task ->
                 task.toUiTask(bucket, true)
             }
@@ -36,10 +36,10 @@ class RoomHomeViewModel(
 
     override fun getBucket(bucketId: Int, onComplete: (bucket: UiBucket?) -> Unit) {
         viewModelScope.launch {
-            val bucket = withContext(Dispatchers.IO){
+            val bucket = withContext(Dispatchers.IO) {
                 repo.getBucket(bucketId)?.toUiBucket()
             }
-            withContext(Dispatchers.Main){
+            withContext(Dispatchers.Main) {
                 onComplete(bucket)
             }
         }

@@ -71,7 +71,7 @@ fun ReorderableCollectionItemScope.TaskItem(
     requireFocus: Boolean,
 ) {
     val direction = LocalLayoutDirection.current
-    var contentFieldValue by remember (task.id){
+    var contentFieldValue by remember(task.id) {
         mutableStateOf(task.content.toTextFieldValue(direction))
     }
     val focusRequester = remember { FocusRequester() }
@@ -80,7 +80,7 @@ fun ReorderableCollectionItemScope.TaskItem(
     val taskIndentAnchor = if (task.isChild) IndentAnchors.Child else IndentAnchors.Root
     val density = LocalDensity.current
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
-    val indentState = remember (task.isChild){
+    val indentState = remember(task.isChild) {
         AnchoredDraggableState(
             initialValue = taskIndentAnchor,
             anchors = DraggableAnchors {
@@ -101,6 +101,7 @@ fun ReorderableCollectionItemScope.TaskItem(
                     Log.d("MoveTask", "Task ${task.content} indentState change to Root")
                     onMoveToRoot()
                 }
+
                 IndentAnchors.Child -> {
                     Log.d("MoveTask", "Task ${task.content} indentState change to Child")
                     onMoveToChild()
@@ -176,14 +177,14 @@ fun ReorderableCollectionItemScope.TaskItem(
             ),
             keyboardActions = KeyboardActions(onDone = { onTaskAdd() })
         )
-        if(isFocused){
+        if (isFocused) {
             IconButton(onClick = onTaskDelete) {
-                Icon(Icons.Default.Close,contentDescription = "Delete")
+                Icon(Icons.Default.Close, contentDescription = "Delete")
             }
         }
     }
-    LaunchedEffect(requireFocus){
-        if(requireFocus){
+    LaunchedEffect(requireFocus) {
+        if (requireFocus) {
             focusRequester.requestFocus()
         }
     }

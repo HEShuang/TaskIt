@@ -35,14 +35,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val repo = AppRepository(AppDatabase.getDatabase(this))
             val homeViewModel = viewModel<RoomHomeViewModel>(
-                factory = object  : ViewModelProvider.Factory {
+                factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                         return RoomHomeViewModel(repo) as T
                     }
                 }
             )
             val taskViewModel = viewModel<RoomTaskViewModel>(
-                factory = object  : ViewModelProvider.Factory {
+                factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
                         return RoomTaskViewModel(repo) as T
                     }
@@ -64,7 +64,10 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun MyApp(homeViewModel: HomeViewModel, taskViewModel: TaskViewModel) {
+fun MyApp(
+    homeViewModel: HomeViewModel,
+    taskViewModel: TaskViewModel,
+) {
     val navController = rememberNavController()
 
     SharedTransitionLayout() {
@@ -73,7 +76,7 @@ fun MyApp(homeViewModel: HomeViewModel, taskViewModel: TaskViewModel) {
             startDestination = Screen.HomeScreen.route,
             modifier = Modifier.fillMaxSize(),
         ) {
-            composable(Screen.HomeScreen.route){
+            composable(Screen.HomeScreen.route) {
                 HomeScreen(
                     viewModel = homeViewModel,
                     onAddBucket = {
@@ -93,32 +96,30 @@ fun MyApp(homeViewModel: HomeViewModel, taskViewModel: TaskViewModel) {
             composable(
                 route = Screen.TaskScreen.route + "/{bucketId}",
                 arguments = listOf(
-                    navArgument("bucketId"){
+                    navArgument("bucketId") {
                         type = NavType.IntType
                         defaultValue = -1
                         nullable = false
                     }
                 )
-            ) {
-                    entry->
+            ) { entry ->
                 //Get bucketId passed by arguments
                 val bucketId = entry.arguments?.getInt("bucketId")!!
-                var bucket by remember { mutableStateOf<Bucket?>(null)}
+                var bucket by remember { mutableStateOf<Bucket?>(null) }
 
                 //add new bucket (bucketId == -1) or get bucket by bucketId
                 LaunchedEffect(Unit) {
-                    if(bucketId < 0) {
+                    if (bucketId < 0) {
                         homeViewModel.addBucket {
                             bucket = it
                         }
-                    }
-                    else {
+                    } else {
                         homeViewModel.getBucket(bucketId) {
                             bucket = it
                         }
                     }
                 }
-                if(bucket != null){
+                if (bucket != null) {
                     TaskScreen(
                         viewModel = taskViewModel,
                         bucket = bucket!!,

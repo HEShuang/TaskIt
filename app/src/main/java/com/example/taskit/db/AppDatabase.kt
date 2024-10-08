@@ -11,7 +11,7 @@ import com.example.taskit.db.model.Task
     entities = [Bucket::class, Task::class],
     version = 1
 )
-abstract class AppDatabase: RoomDatabase() {
+abstract class AppDatabase : RoomDatabase() {
     abstract val bucketDao: BucketDao
     abstract val taskDao: TaskDao
 

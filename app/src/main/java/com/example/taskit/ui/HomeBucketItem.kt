@@ -44,8 +44,8 @@ fun HomeBucketItem(
     onClick: () -> Unit,
     isSelectedState: State<Boolean>,
     switchSelection: () -> Unit,
-){
-    val nTasks = if(nMaxTasks < tasks.size) nMaxTasks else tasks.size
+) {
+    val nTasks = if (nMaxTasks < tasks.size) nMaxTasks else tasks.size
     val isSelected by isSelectedState
 
     val borderColor by animateColorAsState(
@@ -60,7 +60,7 @@ fun HomeBucketItem(
         label = "HomeBucketItem-shadowElevation"
     )
 
-    Box(modifier = modifier.fillMaxSize()){
+    Box(modifier = modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -85,7 +85,8 @@ fun HomeBucketItem(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start,
             ) {
-                Text(// Bucket name
+                Text(
+// Bucket name
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 2.dp, vertical = 6.dp),
@@ -94,7 +95,7 @@ fun HomeBucketItem(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 //List of tasks
-                if(nTasks > 0){
+                if (nTasks > 0) {
                     for (i in 0..<nTasks) {
                         Text(
                             modifier = Modifier
@@ -107,12 +108,12 @@ fun HomeBucketItem(
                     }
                 }
                 //If there are tasks not shown in preview, show the number of the rest tasks
-                if(nTasks < tasks.size){
+                if (nTasks < tasks.size) {
                     val nRest = tasks.size - nTasks
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(1.dp)
-                    ){
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "more items",

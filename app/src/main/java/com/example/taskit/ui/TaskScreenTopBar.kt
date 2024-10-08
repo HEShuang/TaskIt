@@ -30,8 +30,8 @@ fun TaskScreenTopBar(
     bucket: Bucket,
     onBucketNameChange: (newName: String) -> Unit,
     onDeleteBucket: () -> Unit,
-    onGoBack: ()->Unit,
-){
+    onGoBack: () -> Unit,
+) {
     var text by remember { mutableStateOf(bucket.name) }
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(false) }

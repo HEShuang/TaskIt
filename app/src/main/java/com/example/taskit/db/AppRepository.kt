@@ -13,6 +13,7 @@ class AppRepository(
     fun getBucketsFlow(): Flow<List<Bucket>> {
         return db.bucketDao.getBucketsFlow()
     }
+
     suspend fun getBucket(bucketId: Int): Bucket? {
         return db.bucketDao.getBucket(bucketId)
     }
@@ -34,7 +35,7 @@ class AppRepository(
 
     suspend fun deleteBuckets(bucketIds: List<Int>): Unit {
         db.withTransaction {
-            for(id in bucketIds)
+            for (id in bucketIds)
                 db.bucketDao.deleteBucket(id)
         }
     }
@@ -77,7 +78,7 @@ class AppRepository(
 
         //If taskAbove has children, insert new task as his first child
         //Increase taskOrder of original children
-        if(taskAboveChildren.isNotEmpty()){
+        if (taskAboveChildren.isNotEmpty()) {
             newTask = task.copy(
                 bucketId = taskAbove.bucketId,
                 parentId = taskAboveId,
@@ -86,15 +87,15 @@ class AppRepository(
             tasksToUpdate += taskAboveChildren.map { iTask -> iTask.copy(taskOrder = iTask.taskOrder + 1) }
         }
         //Otherwise, insert task after it and increase taskOrder of its siblings below
-        else{
+        else {
             newTask = task.copy(
                 bucketId = taskAbove.bucketId,
                 parentId = taskAbove.parentId,
                 taskOrder = taskAbove.taskOrder + 1
             )
             val siblings = db.taskDao.getTasks(taskAbove.bucketId, taskAbove.parentId)
-            for(iTask in siblings){
-                if(iTask.taskOrder > taskAbove.taskOrder){
+            for (iTask in siblings) {
+                if (iTask.taskOrder > taskAbove.taskOrder) {
                     tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
                 }
             }
@@ -104,15 +105,19 @@ class AppRepository(
             db.taskDao.updateTasks(tasksToUpdate)
         }
     }
+
     suspend fun updateTaskContent(taskId: Int, content: String) {
         db.taskDao.updateTaskContent(taskId, content)
     }
+
     suspend fun updateTaskState(taskId: Int, isChecked: Boolean) {
         db.taskDao.updateTaskState(taskId, isChecked)
     }
+
     suspend fun deleteTask(taskId: Int) {
         db.taskDao.deleteTask(taskId)
     }
+
     suspend fun reorderTask(fromTaskId: Int, toTaskId: Int) {
         val fromTask = db.taskDao.getTask(fromTaskId) ?: return
         val toTask = db.taskDao.getTask(toTaskId) ?: return
@@ -124,11 +129,11 @@ class AppRepository(
         val fromParentId = fromTask.parentId
         val toParentId = toTask.parentId
 
-        if(fromParentId == toParentId && fromOrder == toOrder) {
+        if (fromParentId == toParentId && fromOrder == toOrder) {
             Log.d("MoveTask", "Do nothing: the same task")
             return
         }
-        if(fromTaskId == toParentId){
+        if (fromTaskId == toParentId) {
             Log.d("MoveTask", "Do nothing: move to its own child")
             return
         }
@@ -137,78 +142,76 @@ class AppRepository(
         val tasksToUpdate = mutableListOf<Task>()
 
         //Reordering under the same parent
-        if(fromParentId == toParentId) {
+        if (fromParentId == toParentId) {
             tasksToUpdate += fromTask.copy(taskOrder = toOrder)
             val isMoveDown = fromOrder < toOrder
             val toParentChildren = db.taskDao.getTasks(bucketId, toParentId)
-            for(iTask in toParentChildren){
+            for (iTask in toParentChildren) {
                 //If moving down, decrease taskOrder of the tasks in between
-                if (isMoveDown && iTask.taskOrder in fromOrder + 1..toOrder){
+                if (isMoveDown && iTask.taskOrder in fromOrder + 1..toOrder) {
                     tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder - 1)
                 }
                 //If moving up, increase taskOrder of the tasks in between
-                else if(iTask.taskOrder in toOrder..<fromOrder)
+                else if (iTask.taskOrder in toOrder..<fromOrder)
                     tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
             }
         }
         //Move to new parent
-        else{
+        else {
             //Determine moving down or up
-            val compareFromOrder = if(fromParentId < 0 ) fromOrder else {
+            val compareFromOrder = if (fromParentId < 0) fromOrder else {
                 db.taskDao.getTask(fromParentId)?.taskOrder ?: -1
             }
-            val compareToOrder = if(toParentId < 0) toOrder else {
+            val compareToOrder = if (toParentId < 0) toOrder else {
                 db.taskDao.getTask(toParentId)?.taskOrder ?: -1
             }
             val fromTaskChildren = db.taskDao.getTasks(bucketId, fromTaskId)
             //If moving up, insert the task and its children before the destination task
             //Increase taskOrder of destination task and its siblings below
-            if(compareFromOrder >= compareToOrder) {//Moving Up
+            if (compareFromOrder >= compareToOrder) {//Moving Up
                 var newOrder = toOrder
                 tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = newOrder++)
-                for(iTask in fromTaskChildren){
+                for (iTask in fromTaskChildren) {
                     tasksToUpdate += iTask.copy(parentId = toParentId, taskOrder = newOrder++)
                 }
                 val toParentChildren = db.taskDao.getTasks(bucketId, toParentId)
-                for(iTask in toParentChildren){
-                    if(iTask.taskOrder >= toOrder){
+                for (iTask in toParentChildren) {
+                    if (iTask.taskOrder >= toOrder) {
                         tasksToUpdate += iTask.copy(taskOrder = newOrder++)
                     }
                 }
 
-            }
-            else{
+            } else {
                 //If the destination task has children, insert the task and its children on top of destination task's children
                 //Otherwise, insert the task and its children below the destination task
                 val toTaskChildren = db.taskDao.getTasks(bucketId, toTaskId)
-                if(toTaskChildren.isNotEmpty()){
+                if (toTaskChildren.isNotEmpty()) {
                     var newOrder = 0
                     tasksToUpdate += fromTask.copy(parentId = toTaskId, taskOrder = newOrder++)
-                    for(iTask in fromTaskChildren){
+                    for (iTask in fromTaskChildren) {
                         tasksToUpdate += iTask.copy(parentId = toTaskId, taskOrder = newOrder++)
                     }
                     //Increase taskOrder of the destination task's original children
-                    for(iTask in toTaskChildren){
+                    for (iTask in toTaskChildren) {
                         tasksToUpdate += iTask.copy(taskOrder = newOrder++)
                     }
-                }
-                else {
+                } else {
                     var newOrder = toOrder + 1
                     tasksToUpdate += fromTask.copy(parentId = toParentId, taskOrder = newOrder++)
-                    for(iTask in fromTaskChildren){
+                    for (iTask in fromTaskChildren) {
                         tasksToUpdate += iTask.copy(parentId = toParentId, taskOrder = newOrder++)
                     }
                     //Increase taskOrder of the destination task's siblings below
                     val toParentChildren = db.taskDao.getTasks(bucketId, toParentId)
-                    for(iTask in toParentChildren){
-                        if(iTask.taskOrder > toOrder){
+                    for (iTask in toParentChildren) {
+                        if (iTask.taskOrder > toOrder) {
                             tasksToUpdate += iTask.copy(taskOrder = newOrder++)
                         }
                     }
                 }
             }
         }
-        if(tasksToUpdate.isNotEmpty())
+        if (tasksToUpdate.isNotEmpty())
             db.taskDao.updateTasks(tasksToUpdate)
     }
 
@@ -223,11 +226,11 @@ class AppRepository(
      * -D          -D
      * E           E
      * F           F
-    */
+     */
     suspend fun toRootTask(taskId: Int) {
         val task = db.taskDao.getTask(taskId) ?: return
         Log.d("MoveTask", "Move task to root: $task")
-        if(task.parentId < 0){
+        if (task.parentId < 0) {
             Log.d("MoveTask", "Do nothing: it is already a root task")
             return
         }
@@ -236,8 +239,8 @@ class AppRepository(
         val tasksToUpdate = mutableListOf<Task>()
         //The target task becomes the parent of its siblings below
         val children = db.taskDao.getTasks(task.bucketId, parentTask.id)
-        for(iTask in children){
-            if(iTask.taskOrder > task.taskOrder){
+        for (iTask in children) {
+            if (iTask.taskOrder > task.taskOrder) {
                 tasksToUpdate += iTask.copy(parentId = task.id)
             }
         }
@@ -246,9 +249,9 @@ class AppRepository(
         tasksToUpdate += task.copy(parentId = -1, taskOrder = parentTask.taskOrder + 1)
 
         //Increase the taskOrder of the root tasks that below its old parent
-        val rootTasks = db.taskDao.getTasks(task.bucketId, - 1)
-        for(iTask in rootTasks){
-            if(iTask.taskOrder > parentTask.taskOrder)
+        val rootTasks = db.taskDao.getTasks(task.bucketId, -1)
+        for (iTask in rootTasks) {
+            if (iTask.taskOrder > parentTask.taskOrder)
                 tasksToUpdate += iTask.copy(taskOrder = iTask.taskOrder + 1)
         }
         db.taskDao.updateTasks(tasksToUpdate)
@@ -276,7 +279,7 @@ class AppRepository(
     suspend fun toSubtask(taskId: Int, taskAboveId: Int) {
         val task = db.taskDao.getTask(taskId) ?: return
         Log.d("MoveTask", "move task to child: $task")
-        if(task.parentId >= 0) {
+        if (task.parentId >= 0) {
             Log.d("MoveTask", "Do nothing: it is already a child")
             return
         }
@@ -290,13 +293,13 @@ class AppRepository(
 
         //If the target task has children, append them to the new parent as well
         val children = db.taskDao.getTasks(task.bucketId, task.id)
-        if(children.isNotEmpty()){
-            val tasksToUpdate = mutableListOf(task.copy(parentId = newParentId, taskOrder = newOrder))
-            for(child in children)
+        if (children.isNotEmpty()) {
+            val tasksToUpdate =
+                mutableListOf(task.copy(parentId = newParentId, taskOrder = newOrder))
+            for (child in children)
                 tasksToUpdate += child.copy(parentId = newParentId, taskOrder = ++newOrder)
             db.taskDao.updateTasks(tasksToUpdate)
-        }
-        else {
+        } else {
             db.taskDao.updateTask(task.copy(parentId = newParentId, taskOrder = newOrder))
         }
     }

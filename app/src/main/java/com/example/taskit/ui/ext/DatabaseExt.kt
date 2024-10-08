@@ -10,6 +10,7 @@ fun DbBucket.toUiBucket() = UiBucket(
     id = id,
     name = name,
 )
+
 fun UiBucket.toDbBucket() = DbBucket(
     id = id,
     name = name,

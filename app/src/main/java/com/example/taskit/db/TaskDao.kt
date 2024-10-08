@@ -30,14 +30,15 @@ interface TaskDao {
     suspend fun updateTasks(tasks: List<Task>)
 
     @Transaction
-    suspend fun upsertTasks(tasksToUpdate: List<Task>, vararg taskToInsert: Task){
-        for(task in taskToInsert)
+    suspend fun upsertTasks(tasksToUpdate: List<Task>, vararg taskToInsert: Task) {
+        for (task in taskToInsert)
             insertTask(task)
         updateTasks(tasksToUpdate)
     }
 
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteTask(taskId: Int)
+
     @Query("DELETE FROM tasks WHERE bucket_id = :bucketId")
     suspend fun deleteTasks(bucketId: Int)
 

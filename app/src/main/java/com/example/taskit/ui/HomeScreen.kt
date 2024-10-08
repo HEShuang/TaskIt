@@ -44,8 +44,8 @@ import com.example.taskit.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onAddBucket: ()->Unit,
-    onLoadBucket: (bucketId: Int)->Unit,
+    onAddBucket: () -> Unit,
+    onLoadBucket: (bucketId: Int) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
@@ -55,12 +55,12 @@ fun HomeScreen(
     var showMenu by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
 
-    with(sharedTransitionScope){
+    with(sharedTransitionScope) {
         Scaffold(
             topBar = {
                 AnimatedVisibility(
                     visible = selection.isNotEmpty(),
-                    enter = slideInVertically() + expandVertically (expandFrom = Alignment.Top),
+                    enter = slideInVertically() + expandVertically(expandFrom = Alignment.Top),
                     exit = slideOutVertically() + shrinkVertically()
                 ) {
                     TopAppBar(
@@ -104,12 +104,12 @@ fun HomeScreen(
             },
             floatingActionButtonPosition = FabPosition.End, // Aligns to the bottom-right
             content = { paddingValues ->
-                LazyColumn (
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                ){
-                    items(buckets) {bucket ->
+                ) {
+                    items(buckets) { bucket ->
                         val isSelectedState = remember {
                             derivedStateOf {
                                 bucket.id in selection
@@ -141,7 +141,7 @@ fun HomeScreen(
                         )
                     }
                 }
-                if(buckets.isEmpty()){
+                if (buckets.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -156,14 +156,14 @@ fun HomeScreen(
         )
     }
 
-    if(showDeleteDialog){
+    if (showDeleteDialog) {
         DialogAlertDelete(
             text = "Are you sure to delete selected notes?",
             onDismiss = {
                 showDeleteDialog = false
             },
             onDelete = {
-                if(selection.isNotEmpty()){
+                if (selection.isNotEmpty()) {
                     viewModel.deleteBuckets(selection.toList())
                     selection = emptySet()
                 }

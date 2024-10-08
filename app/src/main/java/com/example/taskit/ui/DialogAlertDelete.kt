@@ -9,9 +9,9 @@ import androidx.compose.runtime.Composable
 fun DialogAlertDelete(
     title: String = "Confirm Deletion",
     text: String,
-    onDismiss: ()->Unit,
-    onDelete: ()->Unit,
-){
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = title) },
