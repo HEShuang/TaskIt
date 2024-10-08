@@ -115,6 +115,10 @@ fun HomeScreen(
                                 bucket.id in selection
                             }
                         }
+                        val tasksStateFlow = remember(bucket) {
+                            viewModel.buildTasksStateFlow(bucket)
+                        }
+                        val tasks by tasksStateFlow.collectAsStateWithLifecycle()
 
                         HomeBucketItem(
                             modifier = Modifier.sharedElement(
@@ -123,7 +127,7 @@ fun HomeScreen(
                             ),
                             bucket = bucket,
                             nMaxTasks = nMaxTasksInPreview,
-                            viewModel = viewModel,
+                            tasks = tasks,
                             onClick = {
                                 onLoadBucket(bucket.id)
                             },

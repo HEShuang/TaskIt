@@ -32,6 +32,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.taskit.ui.model.Bucket
+import com.example.taskit.ui.model.Task
 import com.example.taskit.ui.viewmodel.HomeViewModel
 
 @Composable
@@ -39,15 +40,11 @@ fun HomeBucketItem(
     modifier: Modifier,
     bucket: Bucket,
     nMaxTasks: Int,
-    viewModel: HomeViewModel,
+    tasks: List<Task>,
     onClick: () -> Unit,
     isSelectedState: State<Boolean>,
     switchSelection: () -> Unit,
 ){
-    val tasksStateFlow = remember(bucket) {
-        viewModel.buildTasksStateFlow(bucket)
-    }
-    val tasks by tasksStateFlow.collectAsStateWithLifecycle()
     val nTasks = if(nMaxTasks < tasks.size) nMaxTasks else tasks.size
     val isSelected by isSelectedState
 
