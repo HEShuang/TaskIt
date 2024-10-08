@@ -23,33 +23,28 @@ import com.example.taskit.ui.HomeScreen
 import com.example.taskit.ui.TaskScreen
 import com.example.taskit.ui.model.Bucket
 import com.example.taskit.ui.theme.TaskItTheme
-import com.example.taskit.ui.viewmodel.HomeScreenViewModel
-import com.example.taskit.ui.viewmodel.TaskScreenViewModel
-import com.example.taskit.viewmodel.RoomHomeScreenViewModel
-import com.example.taskit.viewmodel.RoomTaskScreenViewModel
+import com.example.taskit.ui.viewmodel.HomeViewModel
+import com.example.taskit.ui.viewmodel.TaskViewModel
+import com.example.taskit.viewmodel.RoomHomeViewModel
+import com.example.taskit.viewmodel.RoomTaskViewModel
 
 class MainActivity : ComponentActivity() {
-    //private val bucketDao = AppDatabase.getDatabase(this).bucketDao
-    //private val taskDao = AppDatabase.getDatabase(this).taskDao
-    //private val bucketViewModel by viewModels<RoomBucketViewModel>()
-    //private val taskViewModel by viewModels<RoomTaskViewModel>( )
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             val repo = AppRepository(AppDatabase.getDatabase(this))
-            val homeViewModel = viewModel<RoomHomeScreenViewModel>(
+            val homeViewModel = viewModel<RoomHomeViewModel>(
                 factory = object  : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                        return RoomHomeScreenViewModel(repo) as T
+                        return RoomHomeViewModel(repo) as T
                     }
                 }
             )
-            val taskViewModel = viewModel<RoomTaskScreenViewModel>(
+            val taskViewModel = viewModel<RoomTaskViewModel>(
                 factory = object  : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                        return RoomTaskScreenViewModel(repo) as T
+                        return RoomTaskViewModel(repo) as T
                     }
                 }
             )
@@ -69,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun MyApp(homeViewModel: HomeScreenViewModel, taskViewModel: TaskScreenViewModel) {
+fun MyApp(homeViewModel: HomeViewModel, taskViewModel: TaskViewModel) {
     val navController = rememberNavController()
 
     SharedTransitionLayout() {

@@ -1,6 +1,5 @@
 package com.example.taskit.ui
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -23,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,15 +32,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.taskit.ui.model.Bucket
-import com.example.taskit.ui.viewmodel.HomeScreenViewModel
-import com.example.taskit.ui.viewmodel.TaskViewModel
+import com.example.taskit.ui.viewmodel.HomeViewModel
 
 @Composable
 fun HomeBucketItem(
     modifier: Modifier,
     bucket: Bucket,
     nMaxTasks: Int,
-    viewModel: HomeScreenViewModel,
+    viewModel: HomeViewModel,
     onClick: () -> Unit,
     isSelectedState: State<Boolean>,
     switchSelection: () -> Unit,
@@ -66,10 +63,6 @@ fun HomeBucketItem(
         label = "HomeBucketItem-shadowElevation"
     )
 
-    LaunchedEffect(isSelected) {
-        Log.d("aaaa", "launched ${bucket.id} $isSelected")
-    }
-
     Box(modifier = modifier.fillMaxSize()){
         Surface(
             modifier = Modifier
@@ -78,7 +71,6 @@ fun HomeBucketItem(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onLongPress = {
-                            Log.d("aaaa", "onPress ${bucket.id} $isSelected")
                             switchSelection()
                         },
                         onTap = {

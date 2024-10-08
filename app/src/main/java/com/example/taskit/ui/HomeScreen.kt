@@ -38,14 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.taskit.ui.viewmodel.BucketViewModel
-import com.example.taskit.ui.viewmodel.HomeScreenViewModel
-import com.example.taskit.ui.viewmodel.TaskViewModel
+import com.example.taskit.ui.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeScreenViewModel,
+    viewModel: HomeViewModel,
     onAddBucket: ()->Unit,
     onLoadBucket: (bucketId: Int)->Unit,
     sharedTransitionScope: SharedTransitionScope,

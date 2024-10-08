@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import com.example.taskit.db.model.Bucket
 import com.example.taskit.db.model.Task
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class AppRepository(
     val db: AppDatabase
@@ -39,7 +40,18 @@ class AppRepository(
     }
 
     fun getTasksFlow(bucketId: Int): Flow<List<Task>> {
-        return db.taskDao.getTasksFlow(bucketId)
+        //The tasks retrieved from database are ordered by parentId and taskOrder
+        //They need to be reordered by depth first traverse
+        return db.taskDao.getTasksFlow(bucketId).map { tasks ->
+            val tasksByParent = tasks.groupBy { it.parentId }
+            val rootTasks = tasksByParent[-1] ?: emptyList()
+            fun depthFirstTraverse(task: Task): List<Task> {
+                val children = tasksByParent[task.id] ?: emptyList()
+                return listOf(task) + children.flatMap { childTask -> depthFirstTraverse(childTask) }
+            }
+            //transform each root task to a list of tasks, then flat map them all to a single list
+            rootTasks.flatMap { rootTask -> depthFirstTraverse(rootTask) }
+        }
     }
 
     /**
