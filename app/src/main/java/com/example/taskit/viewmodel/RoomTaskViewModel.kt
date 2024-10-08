@@ -1,6 +1,8 @@
 package com.example.taskit.viewmodel
 
 import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.taskit.db.TaskDao
 import com.example.taskit.ui.model.Bucket as UiBucket
 import com.example.taskit.ui.model.Task as UiTask
@@ -17,8 +19,7 @@ import kotlinx.coroutines.launch
 
 class RoomTaskViewModel(
     private val taskDao: TaskDao,
-    private val scope: CoroutineScope,
-): TaskViewModel {
+): TaskViewModel, ViewModel() {
     private val _isWriting = MutableStateFlow(false)
     private val taskOnMove = MutableStateFlow(-2)
 
@@ -26,6 +27,7 @@ class RoomTaskViewModel(
         get() = _isWriting.asStateFlow()
 
     override fun buildTasksStateFlow(bucket: UiBucket): StateFlow<List<UiTask>> {
+        Log.d("ViewModel", "buildTasksStateFlow")
         return combine(taskDao.getTasksFlow(bucket.id), taskOnMove) { tasks, movingTaskId ->
                 //The tasks retrieved from database are ordered by parentId and taskOrder
                 //They need to be reordered by depth first traverse
@@ -42,7 +44,7 @@ class RoomTaskViewModel(
                 //transform each root task to a list of tasks, then flat map them all to a single list
                 rootTasks.flatMap { rootTask -> depthFirstTraverse(rootTask) }
             }
-            .stateIn(scope, SharingStarted.Lazily, emptyList())
+            .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     }
 
     override fun addTask(bucketId: Int) {
@@ -303,7 +305,7 @@ class RoomTaskViewModel(
     }
 
     private fun launchWriteTask(block: suspend CoroutineScope.() -> Unit) {
-        scope.launch {
+        viewModelScope.launch {
             _isWriting.value = true
             block()
             _isWriting.value = false

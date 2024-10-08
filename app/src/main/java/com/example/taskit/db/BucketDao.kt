@@ -17,16 +17,16 @@ interface BucketDao {
     @Update
     suspend fun updateBucket(bucket: Bucket)
 
-    @Delete
-    suspend fun deleteBucket(bucket: Bucket)
+    @Query("DELETE FROM buckets WHERE id = :bucketId")
+    suspend fun deleteBucket(bucketId: Int)
 
     @Query("DELETE FROM buckets WHERE id IN (:bucketIds)")
     suspend fun deleteBuckets(bucketIds: List<Int>)
 
     @Query("SELECT * FROM buckets WHERE id = :bucketId")
-    suspend fun getBucketById(bucketId: Int): Bucket?
+    suspend fun getBucket(bucketId: Int): Bucket?
 
     @Query("SELECT * FROM buckets")
-    fun getAllBuckets(): Flow<List<Bucket>>
+    fun getBucketsFlow(): Flow<List<Bucket>>
 
 }

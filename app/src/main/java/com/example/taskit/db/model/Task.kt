@@ -25,10 +25,10 @@ data class Task(
     val id: Int = 0,
 
     @ColumnInfo(name = "bucket_id")
-    val bucketId: Int, //Each task belongs to a bucket/group
+    val bucketId: Int = 0, //Each task belongs to a bucket/group
 
     @ColumnInfo(name = "parent_id")
-    val parentId : Int, // parentId = -1 means it is a root task
+    val parentId : Int = -1, // parentId = -1 means it is a root task
 
     @ColumnInfo(name = "task_order")
     val taskOrder: Int = 0, // Index under its parent task

@@ -87,6 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.taskit.ui.model.Bucket
 import com.example.taskit.ui.model.Task
 import com.example.taskit.ui.viewmodel.BucketViewModel
+import com.example.taskit.ui.viewmodel.TaskScreenViewModel
 import com.example.taskit.ui.viewmodel.TaskViewModel
 import kotlinx.coroutines.delay
 import sh.calvin.reorderable.ReorderableItem
@@ -97,7 +98,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 )
 @Composable
 fun TaskScreen(
-    taskViewModel: TaskViewModel,
+    viewModel: TaskScreenViewModel,
     bucket: Bucket,
     updateBucket: (bucket: Bucket) -> Unit,
     onDeleteBucket: () -> Unit,
@@ -107,10 +108,10 @@ fun TaskScreen(
 ) {
     val tasksStateFlow = remember(bucket) {
         Log.d("TaskScreen", "buildTasksStateFlow")
-        taskViewModel.buildTasksStateFlow(bucket)
+        viewModel.buildTasksStateFlow(bucket)
     }
     val tasks by tasksStateFlow.collectAsStateWithLifecycle()
-    val isWriting by taskViewModel.isWriting.collectAsStateWithLifecycle()
+    val isWriting by viewModel.isWriting.collectAsStateWithLifecycle()
 
     var reorderableTasks by remember(tasks) { mutableStateOf(tasks) }
     var reorderToIndex by remember { mutableIntStateOf(-1) }
@@ -166,38 +167,38 @@ fun TaskScreen(
                                     task = task,
                                     isReordering = isDragging,
                                     onCheckedChange = { isChecked ->
-                                        taskViewModel.updateTaskState(task.id, isChecked)
+                                        viewModel.updateTaskState(task.id, isChecked)
                                     },
                                     onContentChange = { newText ->
                                         if (newText != task.content) {
-                                            taskViewModel.updateTaskContent(task.id, newText)
+                                            viewModel.updateTaskContent(task.id, newText)
                                         }
                                     },
                                     onTaskAdd = {
                                         focusedItemIndex = index + 1
-                                        taskViewModel.insertTask(task.id)
+                                        viewModel.insertTask(task.id)
                                     },
                                     onTaskDelete = {
                                         focusedItemIndex = index
                                         if (index == tasks.size - 1 && index != 0) {
                                             focusedItemIndex = index - 1
                                         }
-                                        taskViewModel.deleteTask(task.id)
+                                        viewModel.deleteTask(task.id)
                                     },
                                     onReorderStart = {
-                                        taskViewModel.onReorderStart(task.id)
+                                        viewModel.onReorderStart(task.id)
                                     },
                                     onReorderEnd = {
-                                        taskViewModel.onReorderEnd(task.id)
+                                        viewModel.onReorderEnd(task.id)
                                         if (reorderToIndex in 0..<tasks.size)
-                                            taskViewModel.reorderTask(task.id, tasks[reorderToIndex].id)
+                                            viewModel.reorderTask(task.id, tasks[reorderToIndex].id)
                                     },
                                     onMoveToRoot = {
-                                        taskViewModel.moveTaskToRoot(task.id)
+                                        viewModel.moveTaskToRoot(task.id)
                                     },
                                     onMoveToChild = {
                                         if (index in 1..<tasks.size) {
-                                            taskViewModel.moveTaskToChild(task.id, tasks[index - 1].id)
+                                            viewModel.moveTaskToChild(task.id, tasks[index - 1].id)
                                         }
                                     },
                                     isFirstTask = index == 0,
@@ -214,7 +215,7 @@ fun TaskScreen(
                                 elevation = null,
                                 onClick = {
                                     focusedItemIndex = tasks.size
-                                    taskViewModel.addTask(bucket.id)
+                                    viewModel.addTask(bucket.id)
                                 }
                             ) {
                                 Icon(Icons.Filled.Add, contentDescription = "Add Task")

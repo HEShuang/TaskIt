@@ -1,6 +1,8 @@
 package com.example.taskit.viewmodel
 
 import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.taskit.db.BucketDao
 import com.example.taskit.db.TaskDao
 import com.example.taskit.db.model.Bucket as DbBucket
@@ -18,18 +20,17 @@ import kotlinx.coroutines.withContext
 
 class RoomBucketViewModel(
     private val bucketDao: BucketDao,
-    private val scope: CoroutineScope,
-    ): BucketViewModel {
+): BucketViewModel, ViewModel() {
 
-    override val buckets: StateFlow<List<UiBucket>> = bucketDao.getAllBuckets()
+    override val buckets: StateFlow<List<UiBucket>> = bucketDao.getBucketsFlow()
         .onEach { Log.d("RoomBucketViewModel", "buckets: ${it.size}") }
         .map { buckets -> buckets.map { it.toUiBucket() } }
-        .stateIn(scope, SharingStarted.Lazily, emptyList())
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     override fun getBucket(bucketId: Int, onComplete: (bucket: UiBucket?) -> Unit){
-        scope.launch {
+        viewModelScope.launch {
             val bucket = withContext(Dispatchers.IO){
-                bucketDao.getBucketById(bucketId)?.toUiBucket()
+                bucketDao.getBucket(bucketId)?.toUiBucket()
             }
             withContext(Dispatchers.Main){
                 onComplete(bucket)
@@ -39,7 +40,7 @@ class RoomBucketViewModel(
 
     override fun addBucket(nTasks: Int, onComplete: (bucket: UiBucket) -> Unit) {
         //Log.d("RoomBucketViewModel", "addBucket: $nTasks")
-        scope.launch {
+        viewModelScope.launch {
             val uiBucket = withContext(Dispatchers.IO) {
                 val bucket = DbBucket()
                 bucket.id = bucketDao.insertBucket(bucket).toInt()
@@ -53,19 +54,19 @@ class RoomBucketViewModel(
     }
 
     override fun updateBucket(bucket: UiBucket) {
-        scope.launch {
+        viewModelScope.launch {
             bucketDao.updateBucket(bucket.toDbBucket())
         }
     }
 
     override fun deleteBucket(bucket: UiBucket) {
-        scope.launch {
-            bucketDao.deleteBucket(bucket.toDbBucket())
+        viewModelScope.launch {
+            bucketDao.deleteBucket(bucket.id)
         }
     }
 
     override fun deleteBuckets(bucketIds: List<Int>) {
-        scope.launch {
+        viewModelScope.launch {
             bucketDao.deleteBuckets(bucketIds)
         }
     }

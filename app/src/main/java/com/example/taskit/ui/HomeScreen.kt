@@ -39,20 +39,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.taskit.ui.viewmodel.BucketViewModel
+import com.example.taskit.ui.viewmodel.HomeScreenViewModel
 import com.example.taskit.ui.viewmodel.TaskViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomeScreen(
-    bucketViewModel: BucketViewModel,
-    taskViewModel: TaskViewModel,
+    viewModel: HomeScreenViewModel,
     onAddBucket: ()->Unit,
     onLoadBucket: (bucketId: Int)->Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val nMaxTasksInPreview = 5
-    val buckets by bucketViewModel.buckets.collectAsStateWithLifecycle()
+    val buckets by viewModel.buckets.collectAsStateWithLifecycle()
     var selection by rememberSaveable { mutableStateOf(emptySet<Int>()) }
     var showMenu by rememberSaveable { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
@@ -125,7 +125,7 @@ fun HomeScreen(
                             ),
                             bucket = bucket,
                             nMaxTasks = nMaxTasksInPreview,
-                            taskViewModel = taskViewModel,
+                            viewModel = viewModel,
                             onClick = {
                                 onLoadBucket(bucket.id)
                             },
@@ -162,7 +162,7 @@ fun HomeScreen(
             },
             onDelete = {
                 if(selection.isNotEmpty()){
-                    bucketViewModel.deleteBuckets(selection.toList())
+                    viewModel.deleteBuckets(selection.toList())
                     selection = emptySet()
                 }
             },
