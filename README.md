@@ -43,5 +43,5 @@ This project is open-source and available under the **MIT License**. See [`LICEN
 
 ## 🙋‍♀️ Author
 
-Made by [Shuang He](https://github.com/HEShuang) — C++ & Kotlin developer, learning by doing 🚀
+Made by [Shuang He](https://github.com/HEShuang) — C++ & mobile developer, learning by doing 🚀
 
